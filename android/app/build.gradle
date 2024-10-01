@@ -1,0 +1,48 @@
+buildscript {
+    ext.kotlin_version = '1.8.22'
+            ''
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.google.gms:google-services:4.3.10'  // Firebase services
+    }
+}
+
+plugins {
+    id "com.android.application"
+    id 'com.google.gms.google-services'  // Firebase plugin
+    id "dev.flutter.flutter-gradle-plugin"
+    id "org.jetbrains.kotlin.android"
+}
+
+android {
+    namespace = "com.example.vaccination"  // This should match your manifest package name
+    compileSdk = 34
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+
+    }
+
+    defaultConfig {
+        applicationId = "com.example.vaccination"  // Ensure this matches your Firebase package name
+        minSdk = 23
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}

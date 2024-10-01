@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "6204950858",
+    "firebase_url": "https://vaccine-management-c7c9c-default-rtdb.firebaseio.com",
+    "project_id": "vaccine-management-c7c9c",
+    "storage_bucket": "vaccine-management-c7c9c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:6204950858:android:239af212417755149399b3",
+        "android_client_info": {
+          "package_name": "com.example.vaccination"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgzJ2wF66Evl4k9saHSLGe7IrSUjx3Vg0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
