@@ -53,8 +53,6 @@ dependencies:
   provider: ^6.1.2
   http: ^1.2.2
   smooth_page_indicator: ^1.2.0+3
-  material_symbols_icons: ^4.2785.1
-
 
 
 dev_dependencies:
@@ -100,6 +98,8 @@ flutter:
    - images/apple.png
    - images/apple1.png
    - images/homebg.png
+   - images/log.png
+   - images/20944881.jpg
 
 
 

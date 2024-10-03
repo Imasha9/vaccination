@@ -4,7 +4,7 @@ import 'package:vaccination/pages/community_post.dart';
 import 'package:vaccination/pages/home_page.dart';
 import '../pages/VaccinationDetails.dart';
 import '../pages/show_appointments.dart';
-import 'package:material_symbols_icons/material_symbols_icons.dart';
+
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
@@ -65,7 +65,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
               icon: _currentIndex == 1
                   ? const Icon(Icons.calendar_month_rounded,size: 30.0,)
                   : const Icon(
-                      Icons.calendar_month_outlined,size: 25.0,), // Rounded calendar icon
+                Icons.calendar_month_outlined,size: 25.0,), // Rounded calendar icon
               title: const Text("Appointments"),
             ),
             SalomonBottomBarItem(
