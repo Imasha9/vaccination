@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'news.dart'; // Import your NewsPage
+import 'news.dart';
+import 'my_appointments_page.dart';
 import 'notification_page.dart';
 import 'posts_page.dart';
-import 'emergency_contact.dart'; // Import the EmergencyContactPage
-import 'package:vaccination/models/article.dart'; // Import your Article model class
+import 'emergency_contact.dart';
+import 'package:vaccination/models/article.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -13,11 +14,20 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Future<List<Article>>? _latestNews;
+
+  @override
+  void initState() {
+    super.initState();
+    _latestNews = fetchLatestNews();
+  }
+
   Future<List<Article>> fetchLatestNews() async {
     try {
-      final String apiKey = '987b06cfc70542919758e1e0cf36d052'; // Replace with your News API key
+      final String apiKey = '987b06cfc70542919758e1e0cf36d052';
       final response = await http.get(
-        Uri.parse('https://newsapi.org/v2/top-headlines?country=us&category=health&apiKey=$apiKey'),
+        Uri.parse(
+            'https://newsapi.org/v2/top-headlines?country=us&category=health&apiKey=$apiKey'),
       );
 
       if (response.statusCode == 200) {
@@ -26,10 +36,13 @@ class _HomePageState extends State<HomePage> {
 
         List<Article> validArticles = articlesJson
             .map((json) => Article.fromJson(json))
-            .where((article) => article.title != '[Removed]' && article.urlToImage != null)
+            .where((article) =>
+                article.title != '[Removed]' && article.urlToImage != null)
             .toList();
 
-        return validArticles.take(2).toList();
+        return validArticles
+            .take(3)
+            .toList(); // Show the first 3 valid articles
       } else {
         throw Exception('Failed to load news');
       }
@@ -42,280 +55,271 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading:
+            true, // This ensures the back button is shown
+        backgroundColor: Colors.blue, // Top blue background
+        elevation: 0,
+        title: const Center(
+          // Center the title
+          child: Text(
+            'VacciCare',
+            style: TextStyle(
+                color: Colors.white, // Change title color to white
+                fontSize: 30,
+                fontWeight: FontWeight.bold // Adjust font size if needed
+                ),
+          ),
+        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications),
+            icon: const Icon(Icons.notifications,
+                color: Colors.white), // Change notification icon color to white
             onPressed: () {
-              // Handle notification button press
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificationPage()),
+                MaterialPageRoute(
+                    builder: (context) => const NotificationPage()),
               );
             },
           ),
         ],
+        iconTheme: const IconThemeData(
+          color: Colors.white, // Change the back button color to white
+        ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          double bigCardHeight = constraints.maxHeight * 0.25; // 25% of the screen height for big cards
-          double mediumCardHeight = constraints.maxHeight * 0.20; // Increased size for medium cards
-
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Add image at the top (wrap content)
-                  Center(
-                    child: Image.asset(
-                      'images/home.jpg', // Use your image path here
-                      width: constraints.maxWidth * 0.8, // Adjust width for responsive content
-                      height: null, // Wrap content height
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  SizedBox(height: 16), // Add some spacing after the image
-
-                  // Big Card at the top (Vaccine Appointments)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 16.0),
-                    child: Card(
-                      elevation: 6,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(color: Color(0xFF17C2EC), width: 0.6),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: bigCardHeight,
-                        child: TextButton(
-                          onPressed: () {
-                            // Handle button press
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.calendar_month, color: Colors.blue, size: 60),
-                              SizedBox(width: 20),
-                              Expanded(
-                                child: Text(
-                                  'Vaccine Appointments',
-                                  style: TextStyle(color: Colors.blue, fontSize: 24, fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Row for two medium cards and another big card
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Column for two medium cards
-                      Expanded(
-                        child: Column(
-                          children: [
-                            // Medium Card 1 (Community Post)
-                            Container(
-                              margin: const EdgeInsets.only(bottom: 8.0),
-                              child: Card(
-                                elevation: 4,
-                                color: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  side: BorderSide(color: Color(0xFF17C2EC), width: 0.6),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: SizedBox(
-                                  height: mediumCardHeight,
-                                  child: TextButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => PostsPage()),
-                                      );
-                                    },
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Image.asset(
-                                          'images/3900425.png',
-                                          width: 50,
-                                          height: 50,
-                                          fit: BoxFit.cover,
-                                        ),
-                                        SizedBox(height: 8),
-                                        Text(
-                                          'Community Post',
-                                          style: TextStyle(color: Colors.blue, fontSize: 14, fontWeight: FontWeight.bold),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Medium Card 2 (Issue Responses)
-                            Card(
-                              elevation: 4,
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                side: BorderSide(color: Color(0xFF17C2EC), width: 0.6),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: SizedBox(
-                                height: mediumCardHeight,
-                                child: TextButton(
-                                  onPressed: () {
-                                    // Handle button press
-                                  },
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Image.asset(
-                                        'images/issue.png',
-                                        width: 50,
-                                        height: 50,
-                                        fit: BoxFit.cover,
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        'Issue Responses',
-                                        style: TextStyle(color: Color(0xFF17C2EC), fontSize: 14, fontWeight: FontWeight.bold),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Big Card on the right (Emergency Contacts)
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.only(left: 16.0),
-                          child: Card(
-                            elevation: 6,
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              side: BorderSide(color: Colors.red, width: 0.6),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: SizedBox(
-                              height: bigCardHeight,
-                              child: TextButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => EmergencyHelpScreen()),
-                                  );
-                                },
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.asset(
-                                      'images/em-removebg-preview.png',
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Emergency Contacts',
-                                      style: TextStyle(color: Colors.red, fontSize: 14, fontWeight: FontWeight.bold),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Latest Health News button
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0),
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => NewsPage()),
-                        );
-                      },
-                      child: Text(
-                        'Latest Health News',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
-                      ),
-                    ),
-                  ),
-                  // News List at the bottom
-                  FutureBuilder<List<Article>>(
-                    future: fetchLatestNews(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return Center(child: Text('Error loading news.'));
-                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return Center(child: Text('No news available.'));
-                      } else {
-                        final articles = snapshot.data!;
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(), // Prevent scrolling for the inner list
-                          itemCount: articles.length,
-                          itemBuilder: (context, index) {
-                            final article = articles[index];
-                            return ListTile(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => NewsPage()), // Redirecting to NewsPage
-                                );
-                              },
-                              title: Text(
-                                article.title ?? 'No Title',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text(
-                                article.description ?? 'No Description',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              leading: article.urlToImage != null
-                                  ? Image.network(
-                                article.urlToImage!,
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              )
-                                  : Icon(Icons.image, size: 100),
-                            );
-                          },
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
+      body: SingleChildScrollView(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.blue, // Start color
+                Colors.white, // End color
+              ],
+              begin: Alignment.topCenter, // Gradient direction
+              end: Alignment.bottomCenter,
+              stops: [0.0, 0.2],
             ),
-          );
-        },
+          ), // Top background color
+          child: Column(
+            children: [
+              // Header Image
+              Padding(
+                padding: const EdgeInsets.all(0.0),
+                child: Image.asset(
+                  'images/homebg.png', // Example image
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  fit: BoxFit.contain,
+                ),
+              ),
+
+              // White rounded corner background container
+              Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                ),
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    // My Appointments and Community Posts buttons
+                    _buildCustomButton(
+                      icon: Icons.calendar_today_rounded,
+                      label: "My Appointments",
+                      subtitle: "See your upcoming visits", // Added subtitle
+                      color: Colors.blue,
+                      onTap: () {
+
+                      },
+                    ),
+                    SizedBox(height: 8),
+
+                    // Quick Access Menu
+                    const Text("Quick Access Menu",
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue)),
+                    SizedBox(height: 16),
+                    _buildQuickAccessMenu(),
+
+                    // Latest Health News Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment
+                            .center, // Align content in the center horizontally
+                        children: [
+                          const Center(
+                            // Wrap the Text widget in Center
+                            child: Text(
+                              'Latest Health News',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue),
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          FutureBuilder<List<Article>>(
+                            future: _latestNews,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              } else if (snapshot.hasError) {
+                                return Text('Error: ${snapshot.error}');
+                              } else if (!snapshot.hasData ||
+                                  snapshot.data!.isEmpty) {
+                                return const Text('No news available at the moment');
+                              } else {
+                                return Column(
+                                  children: snapshot.data!.map((article) {
+                                    return _buildNewsCard(article);
+                                  }).toList(),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+
+  // Custom Button Builder
+  Widget _buildCustomButton(
+      {required IconData icon,
+      required String label,
+      required String subtitle,
+      required Color color,
+      required Function onTap}) {
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        onTap: () => onTap(),
+        leading: Icon(icon, size: 40, color: Colors.blue),
+        title: Text(
+          label,
+          style: const TextStyle(
+              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
+        ),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.blue),
+      ),
+    );
+  }
+
+  // News Card Builder
+  Widget _buildNewsCard(Article article) {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Provide a fallback value for the title if it's null
+            Text(
+              article.title ?? 'No Title Available', // Fallback string
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue),
+            ),
+            const SizedBox(height: 8),
+            if (article.urlToImage != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(article.urlToImage!,
+                    height: 150, width: double.infinity, fit: BoxFit.cover),
+              ),
+            const SizedBox(height: 8),
+            Text(
+              article.description ??
+                  'No description available', // Provide fallback for description as well
+              style: const TextStyle(fontSize: 14, color: Colors.black),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Quick Access Menu
+  // Quick Access Menu
+  Widget _buildQuickAccessMenu() {
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        _buildQuickAccessButton("Health News", Icons.health_and_safety,
+            Colors.green[100]!, Colors.green, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => NewsPage()));
+            }),
+        _buildQuickAccessButton("Emergency Contacts", Icons.contact_phone,
+            Colors.red[100]!, Colors.red, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => EmergencyHelpScreen()));
+            }),
+        _buildQuickAccessButton("Issue Responses", Icons.announcement_rounded,
+            Colors.yellow[100]!, Colors.yellow[700]!, () {
+              // Add your issue responses page navigation here
+            }),
+        _buildQuickAccessButton("My Vaccine Records", Icons.vaccines,
+            Colors.teal[100]!, Colors.teal, () {
+              // Add your vaccine records page navigation here
+            }),
+        _buildQuickAccessButton("Notifications", Icons.notifications_active,
+            Colors.blue[100]!, Colors.blue, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationPage()));
+            }),
+        _buildQuickAccessButton("Community Posts", Icons.forum_rounded,
+            Colors.purple[200]!, Colors.purple[400]!, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => PostsPage()));
+            }),
+      ],
+    );
+  }
+
+// Quick Access Button Builder
+  Widget _buildQuickAccessButton(
+      String label, IconData icon, Color bgColor, Color iconColor, Function onTap) {
+    return Column(
+      children: [
+        // Button with smaller size and background color
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          color: bgColor, // Apply the background color
+          child: InkWell(
+            onTap: () => onTap(),
+            child: Padding(
+              padding: const EdgeInsets.all(22.0), // Adjust padding to make it smaller
+              child: Icon(icon, size: 48, color: iconColor), // Smaller icon
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
