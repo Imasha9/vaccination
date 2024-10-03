@@ -3,7 +3,7 @@ import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:vaccination/pages/community_post.dart';
 import 'package:vaccination/pages/home_page.dart';
 import '../pages/VaccinationDetails.dart';
-import '../pages/calendar.dart';
+import '../pages/show_appointments.dart';
 import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -16,7 +16,7 @@ class BottomNavBar extends StatefulWidget {
 class _BottomNavBarState extends State<BottomNavBar> {
   final List<Widget> _pages = [
     HomePage(),
-    CalendarPage(),
+    ShowAppointmentsPage(),
     VaccinationForm(),
     CommunityPost(),
   ];

@@ -44,11 +44,17 @@ class DatabaseMethods {
   }
 
 
-  Stream<QuerySnapshot> getEventsForDay(DateTime date) {
-    return _firestore.collection("Events")
-        .where('date', isEqualTo: Timestamp.fromDate(DateTime(date.year, date.month, date.day)))
+  Stream<QuerySnapshot> getEventsForDay(DateTime selectedDay) {
+    final startOfDay = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+    final endOfDay = DateTime(selectedDay.year, selectedDay.month, selectedDay.day, 23, 59, 59);
+
+    return FirebaseFirestore.instance
+        .collection('Events')
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThanOrEqualTo: endOfDay)
         .snapshots();
   }
+
 
   Future<void> updateEvent(String docId, String userId, String title, String description, String place, DateTime date, String startTime, String endTime) {
     return _firestore.collection("Events").doc(docId).update({
