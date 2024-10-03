@@ -3,6 +3,7 @@ import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:vaccination/pages/community_post.dart';
 import 'package:vaccination/pages/home_page.dart';
 import '../pages/VaccinationDetails.dart';
+import '../pages/profile_page.dart';
 import '../pages/show_appointments.dart';
 
 
@@ -18,7 +19,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
     HomePage(),
     ShowAppointmentsPage(),
     VaccinationForm(),
-    CommunityPost(),
+    ProfilePage(),
   ];
 
   int _currentIndex = 0;
