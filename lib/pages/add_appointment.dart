@@ -31,7 +31,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
   final List<String> _genders = ['Female', 'Male'];
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin(); // Local notifications plugin
+      FlutterLocalNotificationsPlugin(); // Local notifications plugin
 
   @override
   void initState() {
@@ -42,10 +42,10 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
   // Initialize local notifications
   void _initializeNotifications() {
     const AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const InitializationSettings initializationSettings =
-    InitializationSettings(android: initializationSettingsAndroid);
+        InitializationSettings(android: initializationSettingsAndroid);
 
     flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
@@ -53,10 +53,13 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
   // Function to show local notification
   Future<void> _showLocalNotification(String title, String body) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails('appointment_channel', 'Appointment Notifications',
-        importance: Importance.max, priority: Priority.high, showWhen: false);
+        AndroidNotificationDetails(
+            'appointment_channel', 'Appointment Notifications',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: false);
     const NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
+        NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
       0,
       title,
@@ -123,14 +126,16 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
               child: const Text('Back to Home'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
-                Navigator.of(context).pushReplacementNamed('/home'); // Navigate to home
+                Navigator.of(context)
+                    .pushReplacementNamed('/home'); // Navigate to home
               },
             ),
             TextButton(
               child: const Text('My Appointments'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
-                Navigator.of(context).pushNamed('/myAppointments'); // Navigate to my appointments
+                Navigator.of(context).pushNamed(
+                    '/myAppointments'); // Navigate to my appointments
               },
             ),
           ],
@@ -195,7 +200,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading:
-        true, // This ensures the back button is shown
+            true, // This ensures the back button is shown
         backgroundColor: Colors.blue, // Top blue background
         elevation: 0,
         title: const Center(
@@ -206,7 +211,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                 color: Colors.white, // Change title color to white
                 fontSize: 30,
                 fontWeight: FontWeight.bold // Adjust font size if needed
-            ),
+                ),
           ),
         ),
         actions: [
@@ -264,7 +269,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius:
-                    BorderRadius.circular(30), // Make all corners rounded
+                        BorderRadius.circular(30), // Make all corners rounded
                     boxShadow: [
                       BoxShadow(
                         color: Colors.grey.withOpacity(0.5),
@@ -293,7 +298,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             suffixIcon:
-                            const Icon(Icons.person, color: Colors.blue),
+                                const Icon(Icons.person, color: Colors.blue),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -319,7 +324,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             suffixIcon:
-                            const Icon(Icons.email, color: Colors.blue),
+                                const Icon(Icons.email, color: Colors.blue),
                           ),
                           validator: _validateEmail,
                           onSaved: (value) => _email = value,
@@ -340,7 +345,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             suffixIcon:
-                            const Icon(Icons.phone, color: Colors.blue),
+                                const Icon(Icons.phone, color: Colors.blue),
                           ),
                           validator: _validatePhone,
                           onSaved: (value) => _phoneNumber = value,
@@ -388,8 +393,8 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                             if (pickedDate != null) {
                               setState(() {
                                 _selectedDate = pickedDate;
-                                _dateOfBirth = DateFormat('yyyy-MM-dd')
-                                    .format(pickedDate);
+                                _dateOfBirth =
+                                    DateFormat('yyyy-MM-dd').format(pickedDate);
                               });
                             }
                           },
@@ -411,7 +416,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                           controller: TextEditingController(
                             text: _selectedDate != null
                                 ? DateFormat('yyyy-MM-dd')
-                                .format(_selectedDate!)
+                                    .format(_selectedDate!)
                                 : '',
                           ),
                           validator: (value) {
@@ -438,7 +443,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             suffixIcon:
-                            const Icon(Icons.message, color: Colors.blue),
+                                const Icon(Icons.message, color: Colors.blue),
                           ),
                           onSaved: (value) => _message = value,
                         ),
@@ -463,6 +468,29 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                                   fontWeight: FontWeight.bold),
                             ),
                             onPressed: _registerAppointment,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              side: const BorderSide(
+                                  color: Colors.red), // Red outline
+                            ),
+                            child: const Text(
+                              'Clear',
+                              style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            onPressed:
+                                _clearForm, // Call clearForm function when pressed
                           ),
                         ),
                       ],
