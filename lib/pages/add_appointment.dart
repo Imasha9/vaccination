@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // For formatting
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // For local notifications
 import '../pages/notification_page.dart';
+import '../services/appointmentdb.dart'; // Import your DatabaseMethods
 
 class RegisterAppointmentPage extends StatefulWidget {
   final String eventId; // Event ID passed from previous page
 
-  const RegisterAppointmentPage({Key? key, required this.eventId}) : super(key: key);
+  const RegisterAppointmentPage({Key? key, required this.eventId})
+      : super(key: key);
 
   @override
-  State<RegisterAppointmentPage> createState() => _RegisterAppointmentPageState();
+  State<RegisterAppointmentPage> createState() =>
+      _RegisterAppointmentPageState();
 }
 
 class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
@@ -26,7 +30,42 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
   String? _selectedGender = 'Female';
   final List<String> _genders = ['Female', 'Male'];
 
-  // Function to save appointment to Firestore
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin(); // Local notifications plugin
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeNotifications();
+  }
+
+  // Initialize local notifications
+  void _initializeNotifications() {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  // Function to show local notification
+  Future<void> _showLocalNotification(String title, String body) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails('appointment_channel', 'Appointment Notifications',
+        importance: Importance.max, priority: Priority.high, showWhen: false);
+    const NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: androidPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      title,
+      body,
+      platformChannelSpecifics,
+    );
+  }
+
+  // Function to save appointment to Firestore using DatabaseMethods
   Future<void> _registerAppointment() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -34,27 +73,106 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
       String? userId = FirebaseAuth.instance.currentUser?.uid;
 
       if (userId != null) {
-        // Save the appointment to the database
-        await FirebaseFirestore.instance.collection('appointments').add({
-          'name': _name,
-          'email': _email,
-          'phone': _phoneNumber,
-          'dateOfBirth': _dateOfBirth,
-          'sex': _selectedGender,
-          'message': _message ?? '',
-          'eventId': widget.eventId, // Event ID from previous page
-          'userId': userId,
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Appointment registered successfully')),
-        );
-        Navigator.pop(context); // Go back after registration
+        try {
+          // Save the appointment using DatabaseMethods
+          await AppointmentDatabaseMethods().addAppointment(
+            userId,
+            _name!,
+            _email!,
+            _phoneNumber!,
+            DateFormat('yyyy-MM-dd').parse(_dateOfBirth!),
+            _selectedGender!,
+            _message,
+            widget.eventId, // Link to the event
+          );
+
+          // Show success popup
+          _showSuccessPopup();
+
+          // Show success notification in the status bar
+          await _showLocalNotification("Appointment Registered",
+              "Your appointment has been recorded and sent for admin approval.");
+        } catch (e) {
+          // Handle failure, show error popup
+          _showErrorPopup();
+
+          // Show error notification in the status bar
+          await _showLocalNotification("Appointment Error",
+              "Failed to register your appointment: ${e.toString()}");
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('User not logged in')),
         );
       }
     }
+  }
+
+  // Success Popup
+  void _showSuccessPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Appointment Registered'),
+          content: const Text(
+            'Your appointment has been recorded and sent for admin approval.',
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Back to Home'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pushReplacementNamed('/home'); // Navigate to home
+              },
+            ),
+            TextButton(
+              child: const Text('My Appointments'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pushNamed('/myAppointments'); // Navigate to my appointments
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Error Popup
+  void _showErrorPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: const Text(
+            'There was an error registering your appointment. Please try again.',
+          ),
+          actions: [
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Function to clear form fields
+  void _clearForm() {
+    _formKey.currentState!.reset();
+    _nameController.clear();
+    _emailController.clear();
+    _phoneController.clear();
+    _messageController.clear();
+    setState(() {
+      _selectedDate = null;
+      _selectedGender = 'Female';
+    });
   }
 
   // Phone number validator
@@ -108,148 +226,247 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
           color: Colors.white, // Change the back button color to white
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
+      body: Container(
+        height: MediaQuery.of(context)
+            .size
+            .height, // Adjust the container to the full height
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blue, Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Name input
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Name',
-                  labelStyle: const TextStyle(color: Colors.blue),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: const Icon(Icons.person, color: Colors.blue),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Name is required';
-                  }
-                  return null;
-                },
-                onSaved: (value) => _name = value,
-              ),
-              const SizedBox(height: 20),
-
-              // Email input
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'E-mail',
-                  labelStyle: const TextStyle(color: Colors.blue),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: const Icon(Icons.email, color: Colors.blue),
-                ),
-                validator: _validateEmail,
-                onSaved: (value) => _email = value,
-              ),
-              const SizedBox(height: 20),
-
-              // Phone input
-              TextFormField(
-                controller: _phoneController,
-                decoration: InputDecoration(
-                  labelText: 'Phone number',
-                  labelStyle: const TextStyle(color: Colors.blue),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: const Icon(Icons.phone, color: Colors.blue),
-                ),
-                validator: _validatePhone,
-                onSaved: (value) => _phoneNumber = value,
-              ),
-              const SizedBox(height: 20),
-
-              // Date of birth input
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Date of birth (DD/MM/YYYY)',
-                  labelStyle: const TextStyle(color: Colors.blue),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: const Icon(Icons.cake, color: Colors.blue),
-                ),
-                readOnly: true,
-                onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      _selectedDate = pickedDate;
-                      _dateOfBirth = DateFormat('dd/MM/yyyy').format(pickedDate);
-                    });
-                  }
-                },
-                validator: (value) {
-                  if (_selectedDate == null) return 'Date of birth is required';
-                  return null;
-                },
-                controller: TextEditingController(
-                    text: _selectedDate != null
-                        ? DateFormat('dd/MM/yyyy').format(_selectedDate!)
-                        : ''),
-                onSaved: (value) => _dateOfBirth = value,
-              ),
-              const SizedBox(height: 20),
-
-              // Gender selection
-              Row(
-                children: [
-                  const Text(
-                    'Sex:',
-                    style: TextStyle(color: Colors.blue),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 30),
+                child: Center(
+                  // Centered the text
+                  child: Text(
+                    'Enter your details to make an appointment',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold, // Makes the text bold
+                    ),
+                    textAlign: TextAlign.center, // Center the text
                   ),
-                  const SizedBox(width: 10),
-                  DropdownButton<String>(
-                    value: _selectedGender,
-                    items: _genders
-                        .map((gender) => DropdownMenuItem(
-                      value: gender,
-                      child: Text(gender),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedGender = value;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Message input
-              TextFormField(
-                controller: _messageController,
-                decoration: InputDecoration(
-                  labelText: 'Leave a message (Optional)',
-                  labelStyle: const TextStyle(color: Colors.blue),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: const Icon(Icons.message, color: Colors.blue),
                 ),
-                maxLines: 3,
-                onSaved: (value) => _message = value,
               ),
-              const SizedBox(height: 20),
-
-              // Register button
-              Center(
-                child: ElevatedButton(
-                  onPressed: _registerAppointment,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 15.0, horizontal: 30.0), backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+              IntrinsicHeight(
+                // IntrinsicHeight allows the white container to grow dynamically
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                    BorderRadius.circular(30), // Make all corners rounded
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 5,
+                        blurRadius: 7,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    'Register',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Name input
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            labelText: 'Name',
+                            labelStyle: const TextStyle(color: Colors.blue),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.blue),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            suffixIcon:
+                            const Icon(Icons.person, color: Colors.blue),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Name is required';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) => _name = value,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Email input
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            labelText: 'E-mail',
+                            labelStyle: const TextStyle(color: Colors.blue),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.blue),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            suffixIcon:
+                            const Icon(Icons.email, color: Colors.blue),
+                          ),
+                          validator: _validateEmail,
+                          onSaved: (value) => _email = value,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Phone input
+                        TextFormField(
+                          controller: _phoneController,
+                          decoration: InputDecoration(
+                            labelText: 'Phone number',
+                            labelStyle: const TextStyle(color: Colors.blue),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.blue),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            suffixIcon:
+                            const Icon(Icons.phone, color: Colors.blue),
+                          ),
+                          validator: _validatePhone,
+                          onSaved: (value) => _phoneNumber = value,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Gender dropdown
+                        DropdownButtonFormField<String>(
+                          value: _selectedGender,
+                          decoration: InputDecoration(
+                            labelText: 'Gender',
+                            labelStyle: const TextStyle(color: Colors.blue),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.blue),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          items: _genders.map((String gender) {
+                            return DropdownMenuItem<String>(
+                              value: gender,
+                              child: Text(gender),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedGender = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Date of birth input
+                        TextFormField(
+                          readOnly: true,
+                          onTap: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime(2100),
+                            );
+                            if (pickedDate != null) {
+                              setState(() {
+                                _selectedDate = pickedDate;
+                                _dateOfBirth = DateFormat('yyyy-MM-dd')
+                                    .format(pickedDate);
+                              });
+                            }
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Date of Birth',
+                            labelStyle: const TextStyle(color: Colors.blue),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.blue),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            suffixIcon: const Icon(
+                              Icons.calendar_today,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          controller: TextEditingController(
+                            text: _selectedDate != null
+                                ? DateFormat('yyyy-MM-dd')
+                                .format(_selectedDate!)
+                                : '',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Date of Birth is required';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) => _dateOfBirth = value,
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Message input (optional)
+                        TextFormField(
+                          controller: _messageController,
+                          decoration: InputDecoration(
+                            labelText: 'Message (optional)',
+                            labelStyle: const TextStyle(color: Colors.blue),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.blue),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            suffixIcon:
+                            const Icon(Icons.message, color: Colors.blue),
+                          ),
+                          onSaved: (value) => _message = value,
+                        ),
+                        const SizedBox(height: 30),
+
+                        // Register button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              backgroundColor: Colors.blue, // Button color
+                            ),
+                            child: const Text(
+                              'Register Appointment',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: _registerAppointment,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
