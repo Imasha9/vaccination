@@ -1,10 +1,8 @@
 import 'package:vaccination/components/bottom_nav_bar.dart';
-
 import 'home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 import 'login.dart';
 
 class SignUp extends StatefulWidget {
@@ -81,11 +79,11 @@ class _SignUpState extends State<SignUp> {
             Container(
               width: double.infinity,
               child: Image.asset(
-                "images/car.PNG",
+                "images/20944881.jpg",
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 30.0),
+            const SizedBox(height: 10.0),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Form(
@@ -97,26 +95,26 @@ class _SignUpState extends State<SignUp> {
                       hintText: 'Name',
                       validatorText: 'Please enter your name',
                     ),
-                    const SizedBox(height: 30.0),
+                    const SizedBox(height: 10.0),
                     _buildTextField(
                       controller: _emailController,
                       hintText: 'Email',
                       validatorText: 'Please enter your email',
                     ),
-                    const SizedBox(height: 30.0),
+                    const SizedBox(height: 10.0),
                     _buildTextField(
                       controller: _nicController,
                       hintText: 'NIC',
                       validatorText: 'Please enter your NIC',
                     ),
-                    const SizedBox(height: 30.0),
+                    const SizedBox(height: 10.0),
                     _buildTextField(
                       controller: _passwordController,
                       hintText: 'Password',
                       validatorText: 'Please enter your password',
                       obscureText: true,
                     ),
-                    const SizedBox(height: 30.0),
+                    const SizedBox(height: 10.0),
                     GestureDetector(
                       onTap: _register,
                       child: _buildButton(context, "Sign Up"),
@@ -125,17 +123,17 @@ class _SignUpState extends State<SignUp> {
                 ),
               ),
             ),
-            const SizedBox(height: 40.0),
+            const SizedBox(height: 10.0),
             const Text(
               "or LogIn with",
               style: TextStyle(
                   color: Color(0xFF273671),
-                  fontSize: 22.0,
+                  fontSize: 18.0,
                   fontWeight: FontWeight.w500),
             ),
-            const SizedBox(height: 30.0),
+            const SizedBox(height: 10.0),
             _buildSocialIcons(),
-            const SizedBox(height: 40.0),
+            const SizedBox(height: 20.0),
             _buildLoginRow(context),
           ],
         ),
@@ -150,10 +148,11 @@ class _SignUpState extends State<SignUp> {
     bool obscureText = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 30.0),
+      padding: const EdgeInsets.symmetric(vertical: 0.5, horizontal: 30.0),
       decoration: BoxDecoration(
           color: const Color(0xFFedf0f8),
-          borderRadius: BorderRadius.circular(30)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFA2CFFE), width: 2)), // Add border here
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
@@ -166,7 +165,7 @@ class _SignUpState extends State<SignUp> {
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
-          hintStyle: const TextStyle(color: Color(0xFFb2b7bf), fontSize: 18.0),
+          hintStyle: const TextStyle(color: Color(0xFFb2b7bf), fontSize: 14.0),
         ),
       ),
     );
@@ -175,14 +174,16 @@ class _SignUpState extends State<SignUp> {
   Widget _buildButton(BuildContext context, String text) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 13.0, horizontal: 30.0),
+      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
       decoration: BoxDecoration(
-          color: const Color(0xFF273671), borderRadius: BorderRadius.circular(30)),
+          color: const Color(0xFF17C2EC),
+          borderRadius: BorderRadius.circular(20),
+          ), // Add border here
       child: Center(
         child: Text(
           text,
           style: const TextStyle(
-              color: Colors.white, fontSize: 22.0, fontWeight: FontWeight.w500),
+              color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.w500),
         ),
       ),
     );
@@ -194,15 +195,15 @@ class _SignUpState extends State<SignUp> {
       children: [
         Image.asset(
           "images/google.png",
-          height: 45,
-          width: 45,
+          height: 30,
+          width: 30,
           fit: BoxFit.cover,
         ),
         const SizedBox(width: 30.0),
         Image.asset(
           "images/apple1.png",
-          height: 50,
-          width: 50,
+          height: 30,
+          width: 30,
           fit: BoxFit.cover,
         ),
       ],
@@ -216,7 +217,7 @@ class _SignUpState extends State<SignUp> {
         const Text("Already have an account?",
             style: TextStyle(
                 color: Color(0xFF8c8e98),
-                fontSize: 18.0,
+                fontSize: 15.0,
                 fontWeight: FontWeight.w500)),
         const SizedBox(width: 5.0),
         GestureDetector(
@@ -225,10 +226,10 @@ class _SignUpState extends State<SignUp> {
                 context, MaterialPageRoute(builder: (context) => LogIn()));
           },
           child: const Text(
-            "LogIn",
+            "Log In",
             style: TextStyle(
                 color: Color(0xFF273671),
-                fontSize: 20.0,
+                fontSize: 18.0,
                 fontWeight: FontWeight.w500),
           ),
         ),

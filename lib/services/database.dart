@@ -6,8 +6,14 @@ class DatabaseMethods {
 
   // Method to add a user
   Future<void> addUser(String userId, Map<String, dynamic> userInfoMap) {
+    userInfoMap['role'] = 'user'; // Default to user role
     return FirebaseFirestore.instance.collection("User").doc(userId).set(userInfoMap);
   }
+  Future<void> addUserAsAdmin(String userId, Map<String, dynamic> userInfoMap) {
+    userInfoMap['role'] = 'admin'; // Admin role
+    return FirebaseFirestore.instance.collection("User").doc(userId).set(userInfoMap);
+  }
+
 
   // Method to add an event
   Future<void> addEvent(String userId, String title, String description, String place, DateTime date, String startTime, String endTime) async {

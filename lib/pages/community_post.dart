@@ -20,7 +20,9 @@ class _CommunityPostState extends State<CommunityPost> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+      backgroundColor: Color(0xFFA2CFFE),
       appBar: AppBar(
         title: const Text('My Posts'),
       ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/database.dart';
 
-
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
 
@@ -17,20 +16,53 @@ class NotificationPage extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: _databaseMethods.getNotifications(),
         builder: (context, snapshot) {
+          // Show loading indicator while waiting for data
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          // Check if there are no notifications
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text("No notifications available."));
           }
+
           final notifications = snapshot.data!.docs;
+
           return ListView.builder(
             itemCount: notifications.length,
             itemBuilder: (context, index) {
               final notification = notifications[index].data() as Map<String, dynamic>;
-              return ListTile(
-                title: Text(notification['message']),
-                subtitle: Text(notification['timestamp'].toDate().toString()),
+
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                color: Color(0xFFDFF2FF),
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Notification Message
+                      Text(
+                        notification['message'] ?? 'No message',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.normal,
+                        ),
+                      ),
+                      const SizedBox(height: 8), // Add spacing between message and timestamp
+                      // Notification Timestamp
+                      Text(
+                        notification['timestamp'] != null
+                            ? notification['timestamp'].toDate().toString()
+                            : 'No timestamp',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               );
             },
           );

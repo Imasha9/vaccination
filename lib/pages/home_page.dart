@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
         List<Article> validArticles = articlesJson
             .map((json) => Article.fromJson(json))
             .where((article) =>
-                article.title != '[Removed]' && article.urlToImage != null)
+        article.title != '[Removed]' && article.urlToImage != null)
             .toList();
 
         return validArticles
@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading:
-            true, // This ensures the back button is shown
+        true, // This ensures the back button is shown
         backgroundColor: Colors.blue, // Top blue background
         elevation: 0,
         title: const Center(
@@ -67,7 +67,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.white, // Change title color to white
                 fontSize: 30,
                 fontWeight: FontWeight.bold // Adjust font size if needed
-                ),
+            ),
           ),
         ),
         actions: [
@@ -198,10 +198,10 @@ class _HomePageState extends State<HomePage> {
   // Custom Button Builder
   Widget _buildCustomButton(
       {required IconData icon,
-      required String label,
-      required String subtitle,
-      required Color color,
-      required Function onTap}) {
+        required String label,
+        required String subtitle,
+        required Color color,
+        required Function onTap}) {
     return Card(
       elevation: 6,
       shape: RoundedRectangleBorder(

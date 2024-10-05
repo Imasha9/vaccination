@@ -3,23 +3,22 @@ import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:vaccination/pages/community_post.dart';
 import 'package:vaccination/pages/home_page.dart';
 import '../pages/VaccinationDetails.dart';
-import '../pages/profile_page.dart';
-import '../pages/show_appointments.dart';
+import '../pages/admin_home.dart';
+import '../pages/calendar.dart';
 
 
-class BottomNavBar extends StatefulWidget {
-  const BottomNavBar({super.key});
+class AdminNavBar extends StatefulWidget {
+  const AdminNavBar({super.key});
 
   @override
-  State<BottomNavBar> createState() => _BottomNavBarState();
+  State<AdminNavBar> createState() => _AdminNavBarState();
 }
 
-class _BottomNavBarState extends State<BottomNavBar> {
+class _AdminNavBarState extends State<AdminNavBar> {
   final List<Widget> _pages = [
-    HomePage(),
-    ShowAppointmentsPage(),
-    VaccinationForm(),
-    ProfilePage(),
+    AdminHomePage(),
+
+    CalendarPage(),
   ];
 
   int _currentIndex = 0;
@@ -60,23 +59,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                   : const Icon(Icons.home_outlined,size: 25.0,), // Rounded home icon
               title: const Text("Home"),
             ),
-            SalomonBottomBarItem(
-              selectedColor: Colors.white, // Color of the selected item
-              unselectedColor: Colors.black45, // Color of the unselected item
-              icon: _currentIndex == 1
-                  ? const Icon(Icons.calendar_month_rounded,size: 30.0,)
-                  : const Icon(
-                Icons.calendar_month_outlined,size: 25.0,), // Rounded calendar icon
-              title: const Text("Appointments"),
-            ),
-            SalomonBottomBarItem(
-              selectedColor: Colors.white,
-              unselectedColor: Colors.black45,
-              icon: _currentIndex == 2
-                  ? const Icon(Icons.vaccines_rounded,size: 30.0,)
-                  : const Icon(Icons.vaccines_outlined,size: 25.0,), // Rounded vaccines icon
-              title: const Text("Records"),
-            ),
+
             SalomonBottomBarItem(
               selectedColor: Colors.white,
               unselectedColor: Colors.black45,
