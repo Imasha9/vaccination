@@ -6,6 +6,7 @@ import '../services/database.dart';
 import 'notification_page.dart';
 import 'package:intl/intl.dart';
 
+
 class CalendarPage extends StatefulWidget {
   const CalendarPage({Key? key}) : super(key: key);
 
@@ -185,6 +186,8 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFA2CFFE),
+
       body: SafeArea(
         child: Column(
           children: [
@@ -212,14 +215,7 @@ class _CalendarPageState extends State<CalendarPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Calendar',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                DateFormat('MMMM yyyy').format(_focusedDay),
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
+
             ],
           ),
           Row(
@@ -400,19 +396,16 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildEventProperty(IconData icon, String text) {
+  Widget _buildEventProperty(IconData icon, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.grey),
-          SizedBox(width: 5),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 14, color: Colors.black87),
-              overflow: TextOverflow.ellipsis,
-            ),
+          Icon(icon, size: 20, color: Colors.grey),
+          SizedBox(width: 10),
+          Text(
+            value,
+            style: TextStyle(fontSize: 16, color: Colors.black),
           ),
         ],
       ),
@@ -422,26 +415,26 @@ class _CalendarPageState extends State<CalendarPage> {
   void _showDeleteConfirmationDialog(String eventId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete Event'),
-        content: Text('Are you sure you want to delete this event?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await _databaseMethods.deleteEvent(eventId);
-              Navigator.pop(context);
-              _loadEvents();
-              setState(() {});
-            },
-            child: Text('Delete'),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-          ),
-        ],
-      ),
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Delete Event'),
+          content: Text('Are you sure you want to delete this event?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _databaseMethods.deleteEvent(eventId);
+                Navigator.pop(context);
+                _loadEvents();
+              },
+              child: Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
