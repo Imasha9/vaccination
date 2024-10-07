@@ -1,45 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart'; // For formatting
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // For local notifications
 import '../pages/notification_page.dart';
-import '../services/appointmentdb.dart'; // Import your DatabaseMethods
+import '../services/appointmentdb.dart';
 
-class RegisterAppointmentPage extends StatefulWidget {
-  final String eventId; // Event ID passed from previous page
+class UpdateAppointments extends StatefulWidget {
+  final Map<String, dynamic> appointment; // Receive the appointment object
 
-  const RegisterAppointmentPage({Key? key, required this.eventId})
+  const UpdateAppointments({Key? key, required this.appointment})
       : super(key: key);
 
   @override
-  State<RegisterAppointmentPage> createState() =>
-      _RegisterAppointmentPageState();
+  State<UpdateAppointments> createState() => _UpdateAppointmentsState();
 }
 
-class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
+class _UpdateAppointmentsState extends State<UpdateAppointments> {
   final _formKey = GlobalKey<FormState>();
 
   String? _name, _email, _phoneNumber, _dateOfBirth, _sex, _message;
   DateTime? _selectedDate;
+
+  // Define controllers for the form fields
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _messageController = TextEditingController();
 
-  String? _selectedGender = 'Female';
+  late String _initialName;
+  late String _initialEmail;
+  late String _initialPhone;
+  late String _initialMessage;
+
+  String? _selectedGender = 'Female'; // Default gender
   final List<String> _genders = ['Female', 'Male'];
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin(); // Local notifications plugin
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
-    _initializeNotifications();
+    _loadAppointmentData();
+    _initializeNotifications(); // Load the appointment data into the form fields
   }
 
-  // Initialize local notifications
   void _initializeNotifications() {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -50,7 +56,6 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
     flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
-  // Function to show local notification
   Future<void> _showLocalNotification(String title, String body) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -68,123 +73,86 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
     );
   }
 
-  // Function to save appointment to Firestore using DatabaseMethods
+  // Load the passed appointment data into form fields
+  void _loadAppointmentData() {
+    // Set initial values from the appointment
+    _initialName = widget.appointment['username'] ?? '';
+    _initialEmail = widget.appointment['email'] ?? '';
+    _initialPhone = widget.appointment['phone'] ?? '';
+    _initialMessage = widget.appointment['optionalMessage'] ?? '';
+    _selectedGender = widget.appointment['sex'] ?? 'Female';
 
+    if (widget.appointment['dob'] != null) {
+      // Assuming dateOfBirth is a Timestamp
+      Timestamp dobTimestamp = widget.appointment['dob'];
+      _selectedDate = dobTimestamp.toDate();
+      _dateOfBirth =
+          "${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}";
+    }
+  }
 
-  Future<void> _registerAppointment() async {
+  // Function to update appointment (you can modify this as per your DB structure)
+  Future<void> _updateAppointment() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      String? userId = FirebaseAuth.instance.currentUser?.uid;
+      // Prepare the updated data, check if values have changed
+      Map<String, dynamic> updatedData = {
+        'username': _nameController.text.isNotEmpty
+            ? _nameController.text
+            : widget.appointment['username'],
+        'email': _emailController.text.isNotEmpty
+            ? _emailController.text
+            : widget.appointment['email'],
+        'phone': _phoneController.text.isNotEmpty
+            ? _phoneController.text
+            : widget.appointment['phone'],
+        'gender': _selectedGender,
+        'dob': _selectedDate ??
+            widget.appointment['dob'], // Use existing date if not changed
+        'optionalMessage': _messageController.text.isNotEmpty
+            ? _messageController.text
+            : widget.appointment['optionalMessage'],
+      };
 
-      if (userId != null) {
-        try {
-          // Fetch event details based on eventId
-          var eventSnapshot = await FirebaseFirestore.instance.collection('Events').doc(widget.eventId).get();
+      try {
+        // Update the appointment in Firestore using the appointment ID
+        await FirebaseFirestore.instance
+            .collection('Appointments')
+            .doc(widget
+                .appointment['id']) // Use the appointment's ID from the Map
+            .update(updatedData);
 
-          // Extract event details
-          var eventData = eventSnapshot.data();
+        // Show success message
+        _showSuccessPopup();
 
-          // Convert timestamp to DateTime for the event date
-          DateTime eventDate = (eventData!['date'] as Timestamp).toDate(); // The actual event date
+        // Send local notification
+        await _showLocalNotification(
+          "Appointment Updated",
+          "Your appointment has been recorded and sent for admin approval.",
+        );
+      } catch (e) {
+        // Handle error if update fails
+        _showErrorPopup();
 
-          // Get start and end times as strings
-          String startTimeString = eventData['startTime']; // Start time as a string
-          String endTimeString = eventData['endTime']; // End time as a string
-
-          // Parse start time and end time from strings to DateTime
-          DateTime startTime = _parseTimeString(startTimeString);
-          DateTime endTime = _parseTimeString(endTimeString);
-
-          // Combine event date with start time and end time
-          DateTime fullStartTime = DateTime(
-            eventDate.year,
-            eventDate.month,
-            eventDate.day,
-            startTime.hour,
-            startTime.minute,
-            startTime.second,
-          );
-
-          DateTime fullEndTime = DateTime(
-            eventDate.year,
-            eventDate.month,
-            eventDate.day,
-            endTime.hour,
-            endTime.minute,
-            endTime.second,
-          );
-
-          // Save the appointment using DatabaseMethods
-          await AppointmentDatabaseMethods().addAppointment(
-            userId,
-            _name!,
-            _email!,
-            _phoneNumber!,
-            eventDate, // Use the event date as DateTime
-            _selectedGender!,
-            _message,
-            widget.eventId, // Link to the event
-            fullStartTime, // Pass full start time
-            fullEndTime, // Pass full end time
-            eventData['description'], // Pass event description
-            eventData['place'], // Pass event place
-            eventData['title'], // Pass event title
-          );
-
-          // Show success popup
-          _showSuccessPopup();
-
-          // Show success notification in the status bar
-          await _showLocalNotification("Appointment Registered",
-              "Your appointment has been recorded and sent for admin approval.");
-        } catch (e) {
-          // Handle failure, show error popup
-          _showErrorPopup();
-
-          // Show error notification in the status bar
-          await _showLocalNotification("Appointment Error",
-              "Failed to register your appointment: ${e.toString()}");
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User not logged in')),
+        await _showLocalNotification(
+          "Appointment Error",
+          "Failed to update your appointment: ${e.toString()}",
         );
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fix the errors in the form.')),
+      );
     }
   }
 
-// Function to parse time strings
-  DateTime _parseTimeString(String timeString) {
-    // Remove any unwanted characters (like periods) and normalize the time string
-    timeString = timeString.replaceAll('.', ':');
-
-    // Split the time string to get hour and minute
-    List<String> timeParts = timeString.split(':');
-    int hour = int.parse(timeParts[0].trim());
-    int minute = timeParts.length > 1 ? int.parse(timeParts[1].trim()) : 0;
-
-    // Assume AM if the hour is less than 12, otherwise PM
-    String amPm = (hour < 12) ? 'AM' : 'PM';
-
-    // Convert 12-hour format to 24-hour format if necessary
-    if (hour == 12) {
-      hour = 0; // Midnight case
-    }
-
-    // Return the parsed DateTime
-    return DateTime.now().copyWith(hour: hour + (amPm == 'PM' ? 12 : 0), minute: minute);
-  }
-
-
-
-  // Success Popup
   void _showSuccessPopup() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Appointment Registered'),
+          title: const Text('Appointment Updated'),
           content: const Text(
             'Your appointment has been recorded and sent for admin approval.',
           ),
@@ -211,7 +179,6 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
     );
   }
 
-  // Error Popup
   void _showErrorPopup() {
     showDialog(
       context: context,
@@ -219,7 +186,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
         return AlertDialog(
           title: const Text('Error'),
           content: const Text(
-            'There was an error registering your appointment. Please try again.',
+            'There was an error updating your appointment. Please try again.',
           ),
           actions: [
             TextButton(
@@ -234,7 +201,6 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
     );
   }
 
-  // Function to clear form fields
   void _clearForm() {
     _formKey.currentState!.reset();
     _nameController.clear();
@@ -247,19 +213,24 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
     });
   }
 
-  // Phone number validator
+  // Phone validator
+  // Phone validator
   String? _validatePhone(String? value) {
-    if (value == null || value.isEmpty) return 'Phone number is required';
-    if (value.length != 10) return 'Phone number must be 10 digits long';
-    return null;
+    // Allow empty input for validation; checks will be made during saving
+    if (value != null && value.isNotEmpty && value.length != 10) {
+      return 'Phone number must be 10 digits long';
+    }
+    return null; // No errors
   }
 
-  // Email validator
+// Email validator
   String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) return 'Email is required';
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
-    return null;
+    // Allow empty input for validation; checks will be made during saving
+    if (value != null && value.isNotEmpty) {
+      final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+      if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
+    }
+    return null; // No errors
   }
 
   @override
@@ -273,10 +244,10 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
         title: const Center(
           // Center the title
           child: Text(
-            'Add Appointment',
+            'Update Appointment',
             style: TextStyle(
                 color: Colors.white, // Change title color to white
-                fontSize: 30,
+                fontSize: 28,
                 fontWeight: FontWeight.bold // Adjust font size if needed
                 ),
           ),
@@ -319,7 +290,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                 child: Center(
                   // Centered the text
                   child: Text(
-                    'Enter your details to make an appointment',
+                    'Enter your details to update the appointment',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -357,6 +328,8 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                           decoration: InputDecoration(
                             labelText: 'Name',
                             labelStyle: const TextStyle(color: Colors.blue),
+                            hintText: _initialName,
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -368,12 +341,21 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                                 const Icon(Icons.person, color: Colors.blue),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Name is required';
+                            // Allow empty input for validation
+                            if (value != null && value.isNotEmpty) {
+                              if (value.trim().isEmpty) {
+                                return 'Name cannot be just whitespace';
+                              }
+                            } else {
+                              // If the value is empty, check if it's the initial value (which allows updates)
+                              return null; // No error for empty input if it matches initial value
                             }
-                            return null;
+                            return null; // No errors
                           },
-                          onSaved: (value) => _name = value,
+                          onSaved: (value) {
+                            // Save the updated value, or fallback to the initial hint if unchanged
+                            _name = value!.isNotEmpty ? value : _initialName;
+                          },
                         ),
                         const SizedBox(height: 20),
 
@@ -383,6 +365,8 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                           decoration: InputDecoration(
                             labelText: 'E-mail',
                             labelStyle: const TextStyle(color: Colors.blue),
+                            hintText: _initialEmail,
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -394,7 +378,10 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                                 const Icon(Icons.email, color: Colors.blue),
                           ),
                           validator: _validateEmail,
-                          onSaved: (value) => _email = value,
+                          onSaved: (value) {
+                            // Save the updated value, or fallback to the initial hint if unchanged
+                            _email = value!.isNotEmpty ? value : _initialEmail;
+                          },
                         ),
                         const SizedBox(height: 20),
 
@@ -404,6 +391,8 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                           decoration: InputDecoration(
                             labelText: 'Phone number',
                             labelStyle: const TextStyle(color: Colors.blue),
+                            hintText: _initialPhone,
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -415,13 +404,18 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                                 const Icon(Icons.phone, color: Colors.blue),
                           ),
                           validator: _validatePhone,
-                          onSaved: (value) => _phoneNumber = value,
+                          onSaved: (value) {
+                            // Save the updated value, or fallback to the initial hint if unchanged
+                            _phoneNumber =
+                                value!.isNotEmpty ? value : _initialPhone;
+                          },
                         ),
                         const SizedBox(height: 20),
 
                         // Gender dropdown
                         DropdownButtonFormField<String>(
-                          value: _selectedGender,
+                          value:
+                              _selectedGender, // This will show the existing gender
                           decoration: InputDecoration(
                             labelText: 'Gender',
                             labelStyle: const TextStyle(color: Colors.blue),
@@ -441,10 +435,11 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                           }).toList(),
                           onChanged: (value) {
                             setState(() {
-                              _selectedGender = value;
+                              _selectedGender = value!;
                             });
                           },
                         ),
+
                         const SizedBox(height: 20),
 
                         // Date of birth input
@@ -453,21 +448,28 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                           onTap: () async {
                             DateTime? pickedDate = await showDatePicker(
                               context: context,
-                              initialDate: DateTime.now(),
+                              initialDate: _selectedDate ??
+                                  DateTime
+                                      .now(), // Use the existing date or current date
                               firstDate: DateTime(1900),
                               lastDate: DateTime(2100),
                             );
                             if (pickedDate != null) {
                               setState(() {
                                 _selectedDate = pickedDate;
-                                _dateOfBirth =
-                                    DateFormat('yyyy-MM-dd').format(pickedDate);
+                                _dateOfBirth = DateFormat('dd-MM-yyyy')
+                                    .format(pickedDate); // Update date format
                               });
                             }
                           },
                           decoration: InputDecoration(
                             labelText: 'Date of Birth',
                             labelStyle: const TextStyle(color: Colors.blue),
+                            hintText: _dateOfBirth!.isNotEmpty
+                                ? _dateOfBirth
+                                : 'Select your Date of Birth', // Display formatted DOB as hint
+                            floatingLabelBehavior: FloatingLabelBehavior
+                                .always, // Show the label at the top
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -482,9 +484,9 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                           ),
                           controller: TextEditingController(
                             text: _selectedDate != null
-                                ? DateFormat('yyyy-MM-dd')
-                                    .format(_selectedDate!)
-                                : '',
+                                ? DateFormat('dd-MM-yyyy').format(
+                                    _selectedDate!) // Show formatted date in text field
+                                : '', // Leave empty if no date is selected
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -494,6 +496,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                           },
                           onSaved: (value) => _dateOfBirth = value,
                         ),
+
                         const SizedBox(height: 20),
 
                         // Message input (optional)
@@ -502,6 +505,8 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                           decoration: InputDecoration(
                             labelText: 'Message (optional)',
                             labelStyle: const TextStyle(color: Colors.blue),
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                            hintText: _initialMessage,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -512,7 +517,11 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                             suffixIcon:
                                 const Icon(Icons.message, color: Colors.blue),
                           ),
-                          onSaved: (value) => _message = value,
+                          onSaved: (value) {
+                            // Save the updated value, or fallback to the initial hint if unchanged
+                            _message =
+                                value!.isNotEmpty ? value : _initialMessage;
+                          },
                         ),
                         const SizedBox(height: 30),
 
@@ -527,14 +536,14 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                               ),
                               backgroundColor: Colors.blue, // Button color
                             ),
+                            onPressed: _updateAppointment,
                             child: const Text(
-                              'Register Appointment',
+                              'Update Appointment',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold),
                             ),
-                            onPressed: _registerAppointment,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -550,7 +559,7 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                                   color: Colors.red), // Red outline
                             ),
                             child: const Text(
-                              'Clear',
+                              'Clear Form',
                               style: TextStyle(
                                   color: Colors.red,
                                   fontSize: 18,

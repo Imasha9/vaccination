@@ -129,7 +129,7 @@ class _HomePageState extends State<HomePage> {
                       subtitle: "See your upcoming visits", // Added subtitle
                       color: Colors.blue,
                       onTap: () {
-
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => MyAppointments()));
                       },
                     ),
                     SizedBox(height: 8),
