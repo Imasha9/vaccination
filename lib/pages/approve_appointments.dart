@@ -205,7 +205,8 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
     );
   }
 
-  Stream<List<QueryDocumentSnapshot>> _getAppointmentsStream(String filter, String query) async* {
+  Stream<List<QueryDocumentSnapshot>> _getAppointmentsStream(
+      String filter, String query) async* {
     var collection = _firestore.collection("Appointments");
 
     Query appointmentQuery;
@@ -326,37 +327,55 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
                   'Date:',
                   DateFormat('yyyy-MM-dd')
                       .format(appointment['startTime'].toDate())),
-              _buildDetailRow('Starting Time:', startTimeFormatted, color: Colors.green, isBold: true, isValueBold: true),
-              _buildDetailRow('Ending Time:', endTimeFormatted, color: Colors.red, isBold: true, isValueBold: true),
-              _buildDetailRow('Place:', appointment['place'], isBold: true, isValueBold: true),
-              _buildDetailRow('Description:', appointment['description']),
+              _buildDetailRow('Starting Time:', startTimeFormatted,
+                  color: Colors.green, isBold: true, isValueBold: true),
+              _buildDetailRow('Ending Time:', endTimeFormatted,
+                  color: Colors.red, isBold: true, isValueBold: true),
+              _buildDetailRow('Place:', appointment['place'],
+                  isBold: true, isValueBold: true),
               _buildDetailRow('Message:', appointment['optionalMessage']),
-              _buildDetailRow('Status:', status,color: _getStatusColor(status),isBold: true),
+              _buildDetailRow('Status:', status,
+                  color: _getStatusColor(status), isBold: true),
             ],
           ),
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(), // Dismiss popup
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[300], // Light grey background color
+                backgroundColor:
+                    Colors.grey[300], // Light grey background color
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12), // Rounded corners
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12), // Padding
+                padding: EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 12), // Padding
               ),
               child: Text(
                 'Close',
                 style: TextStyle(color: Colors.black), // Black text color
               ),
             ),
-            if (status == 'pending') // Show Approve button if pending
-              TextButton(
+            if (status == 'pending') ...[
+              ElevatedButton(
                 onPressed: () {
                   _approveAppointment(appointment.id);
                   Navigator.of(context).pop();
                 },
-                child: Text('Approve'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.green[400], // Green background color for update
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12), // Rounded corners
+                  ),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 12), // Padding
+                ),
+                child: Text(
+                  'Approve',
+                  style: TextStyle(color: Colors.white), // White text color
+                ),
               ),
+            ],
           ],
         );
       },
@@ -383,16 +402,42 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
   }
 
   // Build a row with a label and value
-  Widget _buildDetailRow(String label, String value, {Color? color}) {
+  Widget _buildDetailRow(String title, String value, {Color? color, bool isBold = false, bool isValueBold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(value, style: TextStyle(color: color)),
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal, // Make title bold if isBold is true
+              color: Colors.black,
+            ),
+          ),
+          SizedBox(width: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: isValueBold ? FontWeight.bold : FontWeight.normal, // Make value bold if isValueBold is true
+              color: color ?? Colors.black, // Use the provided color or default to black
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.red; // Pending in red
+      case 'approved':
+        return Colors.blue; // Approved in blue
+      case 'completed':
+        return Colors.green; // Completed in green
+      default:
+        return Colors.black;
+    }
   }
 }
