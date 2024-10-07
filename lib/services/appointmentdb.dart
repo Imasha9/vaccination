@@ -12,7 +12,13 @@ class AppointmentDatabaseMethods {
       DateTime dob,
       String gender,
       String? optionalMessage,
-      String eventId) {
+      String eventId,
+      DateTime startTime, // Add startTime parameter
+      DateTime endTime,   // Add endTime parameter
+      String description,  // Add description parameter
+      String place,        // Add place parameter
+      String title         // Add title parameter
+      ) {
     return _firestore.collection("Appointments").add({
       'userId': userId,
       'username': username,
@@ -24,8 +30,17 @@ class AppointmentDatabaseMethods {
       'status': 'pending', // Default status
       'eventId': eventId,  // Event ID added
       'timestamp': Timestamp.now(),
+      'startTime': startTime, // Store start time as Timestamp
+      'endTime': endTime,     // Store end time as Timestamp
+      'description': description, // Store description
+      'place': place, // Store place
+      'title': title, // Store title
     });
   }
+
+
+
+
 
   // Method to view appointment by ID
   Future<DocumentSnapshot> getAppointmentById(String docId) {
@@ -54,7 +69,7 @@ class AppointmentDatabaseMethods {
       'dob': Timestamp.fromDate(dob),
       'gender': gender,
       'optionalMessage': optionalMessage ?? '',
-      'status': status, // Updated status
+      'status': 'pending', // Updated status
       'timestamp': Timestamp.now(),
     });
   }
