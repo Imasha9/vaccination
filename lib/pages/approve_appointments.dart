@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:vaccination/pages/update_appointments.dart';
 import 'notification_page.dart';
@@ -13,6 +14,7 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
   String filter = 'pending'; // Default filter
   String searchQuery = ''; // Holds the current search query
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? userId = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +91,11 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
         onChanged: onSearchChanged, // Call the function when the input changes
         decoration: InputDecoration(
           hintText:
-              'Search by username, email, description, place', // Placeholder text
+              'username/ email/ description/ place',
+          hintStyle: TextStyle(
+            color: Colors.grey, // Set the color to gray
+            fontSize: 15.0, // Reduce the font size
+          ),// Placeholder text
           border: InputBorder.none, // Remove default border
           icon: Icon(Icons.search, color: Colors.blue[900]), // Search icon
         ),
@@ -180,21 +186,19 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
                     ),
                     SizedBox(height: 8),
                     // Username
-                    _buildDetailRow('Username:', appointment['username']),
-                    _buildDetailRow('Email:', appointment['email']),
+                    _buildDetailRowApp('Username:', appointment['username']),
+                    _buildDetailRowApp('Email:', appointment['email']),
                     // Date (assuming you want to display the date)
-                    _buildDetailRow(
+                    _buildDetailRowApp(
                         'Date:',
                         DateFormat('yyyy-MM-dd')
                             .format(appointment['startTime'].toDate())),
                     // Starting Time
-                    _buildDetailRow('Starting Time:', startTimeFormatted,
+                    _buildDetailRowApp('Starting Time:', startTimeFormatted,
                         color: Colors.green),
-                    // Ending Time
-                    _buildDetailRow('Ending Time:', endTimeFormatted,
+                    _buildDetailRowApp('Ending Time:', endTimeFormatted,
                         color: Colors.red),
-                    // Place
-                    _buildDetailRow('Place:', appointment['place']),
+                    _buildDetailRowApp('Place:', appointment['place']),
                   ],
                 ),
               ),
@@ -320,22 +324,21 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
                 CrossAxisAlignment.start, // Left-align the content
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Username:', appointment['username']),
-              _buildDetailRow('Email:', appointment['email']),
-              _buildDetailRow('Phone:', appointment['phone']),
-              _buildDetailRow(
+              _buildDetailRowApp('Username:', appointment['username']),
+              _buildDetailRowApp('Email:', appointment['email']),
+              _buildDetailRowApp('Phone:', appointment['phone']),
+              _buildDetailRowApp(
                   'Date:',
                   DateFormat('yyyy-MM-dd')
                       .format(appointment['startTime'].toDate())),
-              _buildDetailRow('Starting Time:', startTimeFormatted,
-                  color: Colors.green, isBold: true, isValueBold: true),
-              _buildDetailRow('Ending Time:', endTimeFormatted,
-                  color: Colors.red, isBold: true, isValueBold: true),
-              _buildDetailRow('Place:', appointment['place'],
-                  isBold: true, isValueBold: true),
-              _buildDetailRow('Message:', appointment['optionalMessage']),
-              _buildDetailRow('Status:', status,
-                  color: _getStatusColor(status), isBold: true),
+              _buildDetailRowApp('Starting Time:', startTimeFormatted,
+                  color: Colors.green),
+              _buildDetailRowApp('Ending Time:', endTimeFormatted,
+                  color: Colors.red),
+              _buildDetailRowApp('Place:', appointment['place'],),
+              _buildDetailRowApp('Message:', appointment['optionalMessage']),
+              _buildDetailRowApp('Status:', status,
+                  color: _getStatusColor(status)),
             ],
           ),
           actions: [
@@ -376,6 +379,27 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
                 ),
               ),
             ],
+            if (status == 'approved') ...[
+              ElevatedButton(
+                onPressed: () {
+                  _approveAppointmentCom(appointment.id);
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.green[400], // Green background color for update
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12), // Rounded corners
+                  ),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 12), // Padding
+                ),
+                child: Text(
+                  'Complete',
+                  style: TextStyle(color: Colors.white), // White text color
+                ),
+              ),
+            ],
           ],
         );
       },
@@ -389,6 +413,14 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
           .collection('Appointments')
           .doc(appointmentId)
           .update({'status': 'approved'});
+
+      await _firestore.collection('AppNotifications').add({
+        'appointmentId': appointmentId,
+        'userId': userId,
+        'status': 'approved',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Appointment approved successfully.')));
     } catch (e) {
@@ -397,37 +429,43 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
     }
   }
 
+  Future<void> _approveAppointmentCom(String appointmentId) async {
+    try {
+      await _firestore
+          .collection('Appointments')
+          .doc(appointmentId)
+          .update({'status': 'completed'});
+
+      final QuerySnapshot notificationSnapshot = await _firestore
+          .collection('AppNotifications')
+          .where('appointmentId', isEqualTo: appointmentId)
+          .limit(1)
+          .get();
+
+      if (notificationSnapshot.docs.isNotEmpty) {
+        final notificationDocId = notificationSnapshot.docs.first.id;
+        await _firestore
+            .collection('AppNotifications')
+            .doc(notificationDocId)
+            .update({
+          'status': 'completed',
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Appointment completed successfully.')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to complete appointment: $e')));
+    }
+  }
+
   String _formatTime(DateTime dateTime) {
     return DateFormat('hh:mm a').format(dateTime);
   }
 
   // Build a row with a label and value
-  Widget _buildDetailRow(String title, String value, {Color? color, bool isBold = false, bool isValueBold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal, // Make title bold if isBold is true
-              color: Colors.black,
-            ),
-          ),
-          SizedBox(width: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: isValueBold ? FontWeight.bold : FontWeight.normal, // Make value bold if isValueBold is true
-              color: color ?? Colors.black, // Use the provided color or default to black
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Color _getStatusColor(String status) {
     switch (status) {
       case 'pending':
@@ -440,4 +478,68 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
         return Colors.black;
     }
   }
+}
+
+Widget _buildDetailRowApp(String title, String value, {Color? color}) {
+  IconData iconData;
+
+  // Determine which icon to show based on the title
+  switch (title) {
+    case 'Username:':
+      iconData = Icons.person; // User icon
+      break;
+    case 'Email:':
+      iconData = Icons.email; // Email icon
+      break;
+    case 'Phone:':
+      iconData = Icons.phone; // Phone icon
+      break;
+    case 'Date:':
+      iconData = Icons.calendar_today_rounded; // Gender icon
+      break;
+    case 'Starting Time:':
+      iconData = Icons.access_time; // Clock icon
+      break;
+    case 'Ending Time:':
+      iconData = Icons.access_time; // Clock icon
+      break;
+    case 'Place:':
+      iconData = Icons.place; // Place icon
+      break;
+    case 'Message:':
+      iconData = Icons.message; // Message icon
+      break;
+    case 'Status:':
+      iconData = Icons.check_circle; // Status icon
+      break;
+    default:
+      iconData = Icons.info; // Default info icon
+  }
+
+  bool isBold = title == 'Starting Time:' || title == 'Ending Time:' || title == 'Place:';
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4.0),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Icon(iconData, color: Colors.blue), // Icon for the title
+        SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: color ?? Colors.black,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,// Make value bold
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
