@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:vaccination/pages/calendar.dart';
+import 'approve_appointments.dart';
 import 'news.dart'; // Import your NewsPage
 import 'notification_page.dart';
 import 'posts_page.dart';
@@ -24,7 +25,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
   // Pages for navigation bar
   final List<Widget> _pages = [
     AdminHomeScreen(), // Custom widget displaying content of home page
-    CalendarPage(),    // Other pages like Community Post or Calendar
+    CalendarPage(), // Other pages like Community Post or Calendar
     // Add more pages here based on the navigation tabs you want
   ];
 
@@ -36,10 +37,12 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   // Method to get the current user's name
   void getUserData() async {
-    User? user = FirebaseAuth.instance.currentUser; // Get the current logged-in user
+    User? user =
+        FirebaseAuth.instance.currentUser; // Get the current logged-in user
     if (user != null) {
       String userId = user.uid; // Get the user's UID
-      DocumentReference ref = FirebaseFirestore.instance.collection('users').doc(userId);
+      DocumentReference ref =
+          FirebaseFirestore.instance.collection('users').doc(userId);
 
       ref.get().then((DocumentSnapshot snapshot) {
         if (snapshot.exists) {
@@ -48,7 +51,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
             userName = data?['name'] ?? 'User'; // Get the user's name
             String userEmail = data?['email'] ?? user.email ?? "Not available";
             String userNic = data?['nic'] ?? "Not available";
-            print("Name: $userName, Email: $userEmail, NIC: $userNic"); // Debugging
+            print(
+                "Name: $userName, Email: $userEmail, NIC: $userNic"); // Debugging
           });
         } else {
           print("User data does not exist");
@@ -61,11 +65,11 @@ class _AdminHomePageState extends State<AdminHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFA2CFFE),
-
       body: SafeArea(
         child: Stack(
           children: [
-            _pages[_currentIndex], // Display the page based on the current index
+            _pages[
+                _currentIndex], // Display the page based on the current index
 
             // Image at the top center of the screen
 
@@ -74,22 +78,27 @@ class _AdminHomePageState extends State<AdminHomePage> {
               top: 32, // Adjust based on the image height
               left: 16, // Display user info on the left side
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center, // Align text and icon vertically
+                crossAxisAlignment:
+                    CrossAxisAlignment.center, // Align text and icon vertically
                 children: [
                   // Person Icon
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle, // Makes the background a circle
-                      border: Border.all(color: Colors.blueAccent, width: 2), // Optional border
+                      border: Border.all(
+                          color: Colors.blueAccent,
+                          width: 2), // Optional border
                     ),
                     padding: EdgeInsets.all(4), // Space between icon and border
-                    child: Icon(Icons.person, color: Colors.blue), // Person icon with color
+                    child: Icon(Icons.person,
+                        color: Colors.blue), // Person icon with color
                   ),
                   SizedBox(width: 16), // Add space between the icon and text
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center, // Center vertically inside the row
+                    mainAxisAlignment: MainAxisAlignment
+                        .center, // Center vertically inside the row
                     children: [
                       // Greeting Text
                       Text(
@@ -128,12 +137,11 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 child: Image.asset(
                   'images/onb.png', // Replace with your image path
                   height: 100,
-                  width: 100,// Adjust the height as needed
+                  width: 100, // Adjust the height as needed
                   fit: BoxFit.cover, // Choose the appropriate fit
                 ),
               ),
             ),
-
           ],
         ),
       ),
@@ -141,7 +149,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
         decoration: const BoxDecoration(
           color: Color(0xFF007AFD),
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(33),  // Top-left radius
+            topLeft: Radius.circular(33), // Top-left radius
             topRight: Radius.circular(33), // Top-right radius
           ),
           boxShadow: [
@@ -152,7 +160,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(vertical: 2), // Increases height of the navigation bar
+        padding: const EdgeInsets.symmetric(
+            vertical: 2), // Increases height of the navigation bar
         child: SalomonBottomBar(
           currentIndex: _currentIndex,
           onTap: (int index) {
@@ -166,8 +175,14 @@ class _AdminHomePageState extends State<AdminHomePage> {
               selectedColor: Colors.white, // Color of the selected item
               unselectedColor: Colors.black45, // Color of the unselected item
               icon: _currentIndex == 0
-                  ? const Icon(Icons.home, size: 30.0,) // Filled icon when selected
-                  : const Icon(Icons.home_outlined, size: 25.0,), // Outlined home icon
+                  ? const Icon(
+                      Icons.home,
+                      size: 30.0,
+                    ) // Filled icon when selected
+                  : const Icon(
+                      Icons.home_outlined,
+                      size: 25.0,
+                    ), // Outlined home icon
               title: const Text("Home"),
             ),
             // Events Tab
@@ -175,8 +190,14 @@ class _AdminHomePageState extends State<AdminHomePage> {
               selectedColor: Colors.white,
               unselectedColor: Colors.black45,
               icon: _currentIndex == 1
-                  ? const Icon(Icons.calendar_today, size: 30.0,)
-                  : const Icon(Icons.calendar_today_outlined, size: 25.0,), // Calendar icon
+                  ? const Icon(
+                      Icons.calendar_today,
+                      size: 30.0,
+                    )
+                  : const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 25.0,
+                    ), // Calendar icon
               title: const Text("Events"),
             ),
             // Add more items as needed
@@ -222,7 +243,7 @@ class AdminHomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          height: 500,
+          height: 550,
           padding: EdgeInsets.all(32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -265,7 +286,8 @@ class AdminHomeScreen extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.all(16.0),
                   child: ListTile(
-                    leading: Icon(Icons.report_problem, color: Colors.orange, size: 50),
+                    leading: Icon(Icons.report_problem,
+                        color: Colors.orange, size: 50),
                     title: Text(
                       'Vaccination Issues',
                       style: TextStyle(
@@ -281,9 +303,38 @@ class AdminHomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              SizedBox(height: 16),
+              Card(
+                elevation: 5,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: ListTile(
+                    leading: Icon(Icons.report_problem,
+                        color: Colors.orange, size: 50),
+                    title: Text(
+                      'Manage Appointments',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    subtitle: Text('Approve pending appointments'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ApproveAppointments()),
+                      );
+                    },
+                  ),
+                ),
+              ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
