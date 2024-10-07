@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:vaccination/pages/update_appointments.dart';
 import 'notification_page.dart';
@@ -271,10 +272,17 @@ class _MyAppointmentsState extends State<MyAppointments> {
     Timestamp startOfDay = Timestamp.fromDate(DateTime(today.year, today.month, today.day));
     Timestamp endOfDay = Timestamp.fromDate(startOfDay.toDate().add(Duration(days: 1)).subtract(Duration(milliseconds: 1)));
 
+    String? userId = FirebaseAuth.instance.currentUser?.uid; // Get the current user's ID
+
+    if (userId!.isEmpty) {
+      return Stream.error("User not authenticated"); // Return an error if the user is not authenticated
+    }
+
     try {
       if (filter == 'pending') {
         return _firestore
             .collection("Appointments")
+            .where('userId', isEqualTo: userId) // Filter by userId
             .where('status', isEqualTo: 'pending')
             .orderBy('timestamp', descending: true)
             .snapshots()
@@ -282,6 +290,7 @@ class _MyAppointmentsState extends State<MyAppointments> {
       } else if (filter == 'today') {
         return _firestore
             .collection("Appointments")
+            .where('userId', isEqualTo: userId) // Filter by userId
             .where('status', isEqualTo: 'approved')
             .where('startTime', isGreaterThanOrEqualTo: startOfDay)
             .where('startTime', isLessThanOrEqualTo: endOfDay)
@@ -291,6 +300,7 @@ class _MyAppointmentsState extends State<MyAppointments> {
         Timestamp currentTimestamp = Timestamp.now();
         return _firestore
             .collection("Appointments")
+            .where('userId', isEqualTo: userId) // Filter by userId
             .where('status', isEqualTo: 'approved')
             .where('startTime', isGreaterThan: currentTimestamp)
             .snapshots()
@@ -298,6 +308,7 @@ class _MyAppointmentsState extends State<MyAppointments> {
       } else if (filter == 'completed') {
         return _firestore
             .collection("Appointments")
+            .where('userId', isEqualTo: userId) // Filter by userId
             .where('status', isEqualTo: 'completed')
             .snapshots()
             .map((snapshot) => snapshot.docs);
