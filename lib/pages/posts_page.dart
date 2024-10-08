@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'add_post.dart'; // Import the AddPostPage
+import 'add_post.dart';
+import 'appbar.dart'; // Import the AddPostPage
 
 class PostsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Community Posts'),
-        actions: [
-          // Add any additional actions if needed
-        ],
+      appBar: CommonAppBar(
+        title: 'Community Posts', // Set the title for this page
       ),
       body: PostsList(),
       floatingActionButton: FloatingActionButton(

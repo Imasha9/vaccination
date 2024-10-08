@@ -5,6 +5,7 @@ import 'package:intl/intl.dart'; // For formatting
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // For local notifications
 import '../pages/notification_page.dart';
 import '../services/appointmentdb.dart';
+import 'appbar.dart';
 
 class UpdateAppointments extends StatefulWidget {
   final Map<String, dynamic> appointment; // Receive the appointment object
@@ -236,38 +237,8 @@ class _UpdateAppointmentsState extends State<UpdateAppointments> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading:
-            true, // This ensures the back button is shown
-        backgroundColor: Colors.blue, // Top blue background
-        elevation: 0,
-        title: const Center(
-          // Center the title
-          child: Text(
-            'Update Appointment',
-            style: TextStyle(
-                color: Colors.white, // Change title color to white
-                fontSize: 28,
-                fontWeight: FontWeight.bold // Adjust font size if needed
-                ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications,
-                color: Colors.white), // Change notification icon color to white
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const NotificationPage()),
-              );
-            },
-          ),
-        ],
-        iconTheme: const IconThemeData(
-          color: Colors.white, // Change the back button color to white
-        ),
+      appBar: CommonAppBar(
+        title: 'Update Appointment', // Set the title for this page
       ),
       body: Container(
         height: MediaQuery.of(context)

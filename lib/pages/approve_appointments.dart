@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:vaccination/pages/update_appointments.dart';
+import 'appbar.dart';
 import 'notification_page.dart';
 import 'package:intl/intl.dart';
 
@@ -14,40 +15,36 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
   String filter = 'pending'; // Default filter
   String searchQuery = ''; // Holds the current search query
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  String? userId = FirebaseAuth.instance.currentUser?.uid;
+  String? userId;
+
+  Future<void> _fetchUserIdFromAppointment(String appointmentId) async {
+    try {
+      DocumentSnapshot appointmentDoc = await FirebaseFirestore.instance
+          .collection('Appointments')
+          .doc(appointmentId)
+          .get();
+
+      if (appointmentDoc.exists) {
+        setState(() {
+          userId = appointmentDoc['userId']; // Assign the userId from the appointment
+        });
+      }
+    } catch (e) {
+      print('Error fetching userId: $e');
+      // Handle error (e.g., show a snackbar)
+    }
+  }
+
+
+
+
+  // Method to fetch userId from the Appointments collection
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: true,
-        backgroundColor: Colors.blue,
-        elevation: 0,
-        title: const Center(
-          child: Text(
-            'Manage Appointments',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const NotificationPage()),
-              );
-            },
-          ),
-        ],
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
+      appBar: CommonAppBar(
+        title: 'Approve Appointments', // Set the title for this page
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -153,7 +150,10 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
                 DateFormat('HH:mm').format(appointment['endTime'].toDate());
 
             return GestureDetector(
-              onTap: () => _showAppointmentDetailsDialog(appointment),
+              onTap: () {
+                _fetchUserIdFromAppointment(appointment.id);  // Fetch the user ID
+                _showAppointmentDetailsDialog(appointment);   // Show details dialog
+              },
               child: Container(
                 margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 padding: const EdgeInsets.all(16.0),
@@ -418,6 +418,7 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
         'appointmentId': appointmentId,
         'userId': userId,
         'status': 'approved',
+        'readStatus': 0,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
@@ -479,6 +480,8 @@ class _ApproveAppointmentsState extends State<ApproveAppointments> {
     }
   }
 }
+
+
 
 Widget _buildDetailRowApp(String title, String value, {Color? color}) {
   IconData iconData;
@@ -542,4 +545,6 @@ Widget _buildDetailRowApp(String title, String value, {Color? color}) {
       ],
     ),
   );
+
+
 }
