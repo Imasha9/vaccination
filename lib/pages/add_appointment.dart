@@ -4,7 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // For formatting
 import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // For local notifications
 import '../pages/notification_page.dart';
-import '../services/appointmentdb.dart'; // Import your DatabaseMethods
+import '../services/appointmentdb.dart';
+import 'appbar.dart'; // Import your DatabaseMethods
 
 class RegisterAppointmentPage extends StatefulWidget {
   final String eventId; // Event ID passed from previous page
@@ -265,38 +266,8 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading:
-            true, // This ensures the back button is shown
-        backgroundColor: Colors.blue, // Top blue background
-        elevation: 0,
-        title: const Center(
-          // Center the title
-          child: Text(
-            'Add Appointment',
-            style: TextStyle(
-                color: Colors.white, // Change title color to white
-                fontSize: 30,
-                fontWeight: FontWeight.bold // Adjust font size if needed
-                ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications,
-                color: Colors.white), // Change notification icon color to white
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const NotificationPage()),
-              );
-            },
-          ),
-        ],
-        iconTheme: const IconThemeData(
-          color: Colors.white, // Change the back button color to white
-        ),
+      appBar: CommonAppBar(
+        title: 'Add Appointment', // Set the title for this page
       ),
       body: Container(
         height: MediaQuery.of(context)

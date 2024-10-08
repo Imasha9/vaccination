@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:vaccination/pages/update_appointments.dart';
+import 'appbar.dart';
 import 'notification_page.dart';
 import 'package:intl/intl.dart';
 
@@ -17,35 +18,8 @@ class _MyAppointmentsState extends State<MyAppointments> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: true,
-        backgroundColor: Colors.blue,
-        elevation: 0,
-        title: const Center(
-          child: Text(
-            'My Appointments',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const NotificationPage()),
-              );
-            },
-          ),
-        ],
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
+      appBar: CommonAppBar(
+        title: 'My Appointments', // Set the title for this page
       ),
       body: Container(
         decoration: BoxDecoration(

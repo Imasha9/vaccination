@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'call.dart';
+import 'appbar.dart';
 
 class EmergencyHelpScreen extends StatefulWidget {
   const EmergencyHelpScreen({Key? key}) : super(key: key);
@@ -11,127 +11,139 @@ class EmergencyHelpScreen extends StatefulWidget {
 }
 
 class _EmergencyHelpScreenState extends State<EmergencyHelpScreen> {
-  final _formKey = GlobalKey<FormState>();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-
-
+      appBar: CommonAppBar(
+        title: 'Emergency Contacts', // Set the title for this page
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.blue,
+              Colors.white,
+            ],
+          ),
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              'Emergency Help Needed?',
+            const SizedBox(height: 16),
+            const Text(
+              'Emergency? Don\'t Panic, Just Dial!',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
+                color: Colors.white, // White color for contrast
               ),
+              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16),
-            Center(
+            const SizedBox(height: 32),
+            Expanded(
               child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.red,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
+                width: double.infinity, // Full width
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(32),
+                    topRight: Radius.circular(32),
+                  ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Icon(
-                    Icons.phone_in_talk,
-                    size: 48,
-                    color: Colors.white,
+                  padding: const EdgeInsets.all(16.0),
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    children: [
+                      _buildEmergencyButton(
+                        icon: Icons.airport_shuttle_rounded,
+                        label: '1990',
+                        phoneNumber: '1990',
+                        backgroundColor: Colors.red[100]!,
+                        iconColor: Colors.red[400]!,
+                      ),
+                      _buildEmergencyButton(
+                        icon: Icons.local_hospital_rounded,
+                        label: 'Nearest Hospital',
+                        phoneNumber: '0453453820',
+                        backgroundColor: Colors.blue[100]!,
+                        iconColor: Colors.blue[400]!,
+                      ),
+                      _buildEmergencyButton(
+                        icon: Icons.health_and_safety_rounded,
+                        label: 'Health & Safety',
+                        phoneNumber: '1091',
+                        backgroundColor: Colors.green[100]!,
+                        iconColor: Colors.green,
+                      ),
+                      _buildEmergencyButton(
+                        icon: Icons.airport_shuttle_rounded,
+                        label: 'Ambulance',
+                        phoneNumber: '6565',
+                        backgroundColor: Colors.orange[100]!,
+                        iconColor: Colors.orange,
+                      ),
+                      _buildEmergencyButton(
+                        icon: Icons.local_hospital_rounded, // Use a different icon if available
+                        label: 'Poison Control',
+                        phoneNumber: '9090',
+                        backgroundColor: Colors.purple[100]!,
+                        iconColor: Colors.purple[400]!,
+                      ),
+                      _buildEmergencyButton(
+                        icon: Icons.group_rounded,
+                        label: 'Alert Friends',
+                        phoneNumber: '588',
+                        backgroundColor: Colors.yellow[100]!,
+                        iconColor: Colors.yellow[700]!, // Changed to yellowAccent for consistency
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: 16),
-
-            SizedBox(height: 32),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                children: [
-                  _buildEmergencyButton(
-                    icon: Icons.local_hospital,
-                    label: 'hospital',
-                    phoneNumber: '100',
-                  ),
-                  _buildEmergencyButton(
-                    icon: Icons.health_and_safety_rounded,
-                    label: 'health and safety',
-                    phoneNumber: '1091',
-                  ),
-                  _buildEmergencyButton(
-                    icon: Icons.airport_shuttle_outlined,
-                    label: 'Ambulance',
-                    phoneNumber: '134',
-
-                  ),
-                  _buildEmergencyButton(
-                    icon: Icons.group,
-                    label: 'Alert Friends',
-                    phoneNumber: '588',
-
-                  ),
-                ],
               ),
             ),
           ],
         ),
       ),
-
     );
   }
 
   Widget _buildEmergencyButton({
     required IconData icon,
     required String label,
+    required Color backgroundColor,
+    required Color iconColor,
     String? phoneNumber,
     VoidCallback? onPressed,
   }) {
     return ElevatedButton(
       onPressed: () {
         if (phoneNumber != null && phoneNumber.isNotEmpty) {
-          if (phoneNumber.startsWith('tel:')) {
-            launchUrl(Uri.parse(phoneNumber));
-          } else {
-            FlutterPhoneDirectCaller.callNumber(phoneNumber);
-          }
+          FlutterPhoneDirectCaller.callNumber(phoneNumber);
         } else if (onPressed != null) {
           onPressed();
         }
       },
       style: ElevatedButton.styleFrom(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
+        backgroundColor: backgroundColor, // Use provided background color
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(24), // More rounded corners
         ),
+        elevation: 4,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 32),
-          SizedBox(height: 8),
+          Icon(icon, size: 80, color: iconColor), // Larger icon size with matching color
+          const SizedBox(height: 8),
           Text(
             label,
-            style: TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 19, color: Colors.black), // Adjusted font size
           ),
         ],
       ),

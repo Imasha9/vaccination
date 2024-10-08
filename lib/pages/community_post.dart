@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:vaccination/services/firestore.dart';
-import 'add_post.dart'; // Import the AddPostPage
+import 'add_post.dart';
+import 'appbar.dart'; // Import the AddPostPage
 
 class CommunityPost extends StatefulWidget {
   const CommunityPost({super.key});
@@ -20,11 +21,10 @@ class _CommunityPostState extends State<CommunityPost> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      backgroundColor: Color(0xFFA2CFFE),
-      appBar: AppBar(
-        title: const Text('My Posts'),
+      backgroundColor: Colors.white,
+      appBar: CommonAppBar(
+        title: 'My Posts', // Set the title for this page
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: firestoreService.getPostsStream(),
@@ -48,8 +48,10 @@ class _CommunityPostState extends State<CommunityPost> {
             itemBuilder: (context, index) {
               DocumentSnapshot document = postsList[index];
               String docID = document.id;
-              String postText = (document.data() as Map<String, dynamic>)['post'] ?? 'No content';
-              String imageUrl = (document.data() as Map<String, dynamic>)['imageUrl'] ?? '';
+              String postText =
+                  (document.data() as Map<String, dynamic>)['post'] ?? 'No content';
+              String imageUrl =
+                  (document.data() as Map<String, dynamic>)['imageUrl'] ?? '';
 
               bool isExpanded = false;
 
@@ -59,22 +61,31 @@ class _CommunityPostState extends State<CommunityPost> {
                 child: Stack(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(16.0), // Outer padding around the entire block
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (imageUrl.isNotEmpty)
-                            Image.network(
-                              imageUrl,
-                              height: 150,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[300],
-                                  child: Center(child: Text('Image not available')),
-                                );
-                              },
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 16.0), // Space around the image
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16), // Rounded corners for the image
+                                child: Image.network(
+                                  imageUrl,
+                                  height: 150,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[300],
+                                      height: 150, // Keep the same height for the placeholder
+                                      child: Center(
+                                        child: Text('Image not available'),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
                             ),
                           const SizedBox(height: 8.0),
                           Text(
@@ -82,6 +93,7 @@ class _CommunityPostState extends State<CommunityPost> {
                             style: const TextStyle(fontSize: 12.0),
                             maxLines: isExpanded ? null : 3,
                             overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                            textAlign: TextAlign.justify, // Ensures the text is justified
                           ),
                           if (postText.length > 100)
                             TextButton(
