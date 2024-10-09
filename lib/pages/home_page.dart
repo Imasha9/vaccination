@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'appbar.dart';
 import 'news.dart';
 import 'my_appointments_page.dart';
 import 'notification_page.dart';
 import 'posts_page.dart';
 import 'emergency_contact.dart';
 import 'package:vaccination/models/article.dart';
+import 'package:badges/badges.dart' as badges;
 
 class HomePage extends StatefulWidget {
   @override
@@ -54,38 +56,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading:
-        true, // This ensures the back button is shown
-        backgroundColor: Colors.blue, // Top blue background
-        elevation: 0,
-        title: const Center(
-          // Center the title
-          child: Text(
-            'VacciCare',
-            style: TextStyle(
-                color: Colors.white, // Change title color to white
-                fontSize: 30,
-                fontWeight: FontWeight.bold // Adjust font size if needed
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications,
-                color: Colors.white), // Change notification icon color to white
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const NotificationPage()),
-              );
-            },
-          ),
-        ],
-        iconTheme: const IconThemeData(
-          color: Colors.white, // Change the back button color to white
-        ),
+      appBar: CommonAppBar(
+        title: 'VacciCare', // Set the title for this page
       ),
       body: SingleChildScrollView(
         child: Container(

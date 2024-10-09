@@ -5,6 +5,7 @@ import '../services/database.dart';
 import 'package:intl/intl.dart';
 import '../pages/notification_page.dart';
 import '../pages/add_appointment.dart';
+import 'appbar.dart';
 
 class ShowAppointmentsPage extends StatefulWidget {
   const ShowAppointmentsPage({Key? key}) : super(key: key);
@@ -33,7 +34,8 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
       print('Attempting to load events from Firestore...');
 
       final events = await _databaseMethods.getAllEvents();
-      print('Successfully retrieved events from Firestore. Processing events...');
+      print(
+          'Successfully retrieved events from Firestore. Processing events...');
 
       final newEvents = <DateTime, List<dynamic>>{};
 
@@ -42,7 +44,8 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
 
         // Ensure the event has the document ID as 'id'
         event['id'] = doc.id; // doc.id is the Firestore document ID
-        print('Processing event with ID: ${event['id']}'); // This should now print the correct ID
+        print(
+            'Processing event with ID: ${event['id']}'); // This should now print the correct ID
 
         final date = event['date'];
 
@@ -55,7 +58,8 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
           }
           newEvents[dateKey]!.add(event);
         } else {
-          print('Event does not contain a valid date (not a Timestamp): $event');
+          print(
+              'Event does not contain a valid date (not a Timestamp): $event');
         }
       }
 
@@ -74,8 +78,6 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
     }
   }
 
-
-
   List<dynamic> _getEventsForDay(DateTime day) {
     // Log the day being queried for events
     print('Fetching events for day: ${DateFormat('yyyy-MM-dd').format(day)}');
@@ -87,7 +89,8 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
     List<dynamic> eventsForDay = _events[key] ?? [];
 
     // Log the number of events found for that day
-    print('Number of events found for ${DateFormat('yyyy-MM-dd').format(day)}: ${eventsForDay.length}');
+    print(
+        'Number of events found for ${DateFormat('yyyy-MM-dd').format(day)}: ${eventsForDay.length}');
 
     // Optionally, log each event's ID and title (if available)
     for (var event in eventsForDay) {
@@ -96,7 +99,6 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
 
     return eventsForDay;
   }
-
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     if (!isSameDay(_selectedDay, selectedDay)) {
@@ -110,38 +112,8 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading:
-            true, // This ensures the back button is shown
-        backgroundColor: Colors.blue, // Top blue background
-        elevation: 0,
-        title: const Center(
-          // Center the title
-          child: Text(
-            'Appointments',
-            style: TextStyle(
-                color: Colors.white, // Change title color to white
-                fontSize: 30,
-                fontWeight: FontWeight.bold // Adjust font size if needed
-                ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications,
-                color: Colors.white), // Change notification icon color to white
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const NotificationPage()),
-              );
-            },
-          ),
-        ],
-        iconTheme: const IconThemeData(
-          color: Colors.white, // Change the back button color to white
-        ),
+      appBar: CommonAppBar(
+        title: 'Vaccine Events', // Set the title for this page
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -314,105 +286,72 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
             print('Valid Document ID: ${doc.id}'); // Log valid IDs
           }
         }
+
         return ListView.builder(
           itemCount: snapshot.data!.docs.length,
           itemBuilder: (context, index) {
             final doc = snapshot.data!.docs[index];
-            final event =
-                snapshot.data!.docs[index].data() as Map<String, dynamic>;
+            final event = snapshot.data!.docs[index].data() as Map<String, dynamic>;
             String eventId = doc.id;
             print('Building UI for event with ID: $eventId'); // Use the document ID
-            return Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
-              margin: EdgeInsets.only(bottom: 15),
-              child: Padding(
-                padding: const EdgeInsets.all(15),
-                child: Column(
-                  // Use a Column for the title and event details/button
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Center the event title
-                    Center(
-                      child: Text(
-                        event['title'] ?? 'Untitled Appointment',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+
+            return GestureDetector(
+              onTap: () {
+                if (eventId.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RegisterAppointmentPage(eventId: eventId),
+                    ),
+                  );
+                } else {
+                  print('Event ID is null');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Event ID is missing')),
+                  );
+                }
+              },
+              child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                margin: EdgeInsets.only(bottom: 15),
+                child: Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          event['title'] ?? 'Untitled Appointment',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      // Row for event details and button
-                      children: [
-                        Expanded(
-                          flex: 3, // Adjust this for the left column size
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildEventProperty(Icons.access_time,
-                                  '${event['startTime'] ?? 'N/A'} - ${event['endTime'] ?? 'N/A'}',
-                                  color: Colors.green), // Clock icon in green
-                              _buildEventProperty(Icons.location_on,
-                                  event['place'] ?? 'No location',
-                                  color: Colors.red), // Location icon in red
-                              _buildEventProperty(Icons.description,
-                                  event['description'] ?? 'No description',
-                                  color:
-                                      Colors.blue), // Description icon in blue
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                            width: 10), // Spacing between details and button
-                        Expanded(
-                          flex:
-                              3, // Adjust this for the right column (button) size
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment
-                                .center, // Center the button vertically
-                            children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (eventId != null) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => RegisterAppointmentPage(eventId: eventId),
-                                      ),
-                                    );
-                                  } else {
-                                    print('Event ID is null');
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Event ID is missing')),
-                                    );
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green[400],
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Make\nAppointment',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      SizedBox(height: 10),
+                      _buildEventProperty(
+                        Icons.access_time,
+                        'Time:',
+                        '${event['startTime'] ?? 'N/A'} - ${event['endTime'] ?? 'N/A'}',
+                        color: Colors.green,
+                      ),
+                      _buildEventProperty(
+                        Icons.location_on,
+                        'Location:',
+                        event['place'] ?? 'No location',
+                        color: Colors.red,
+                      ),
+                      _buildEventProperty(
+                        Icons.description,
+                        'Description:',
+                        event['description'] ?? 'No description',
+                        color: Colors.blue,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -422,25 +361,41 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
     );
   }
 
-  Widget _buildEventProperty(IconData icon, String text, {Color? color}) {
+  Widget _buildEventProperty(IconData icon, String title, String text, {Color? color}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: 10), // Increased spacing
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align items to the start
         children: [
-          Icon(icon,
-              size: 20,
-              color: color ?? Colors.grey), // Increased icon size to 20
+          Icon(icon, size: 20, color: color ?? Colors.grey), // Increased icon size to 20
           SizedBox(width: 10),
           Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                  fontSize: 16, color: Colors.black87), // Increased text size
-              overflow: TextOverflow.ellipsis,
+            child: Row( // Use Row instead of Column
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align items with space between
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold, // Bold title
+                    color: Colors.black87,
+                  ),
+                ),
+                Flexible( // Use Flexible to prevent overflow
+                  child: Text(
+                    text,
+                    style: TextStyle(fontSize: 16, color: Colors.black87), // Increased text size
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end, // Align text to the end
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
+
 }

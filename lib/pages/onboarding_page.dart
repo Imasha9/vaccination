@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:vaccination/components/bottom_nav_bar.dart';
 import 'package:vaccination/pages/login.dart';
-import 'home_page.dart'; // Import HomePage for navigation
 import 'package:vaccination/widgets/onboarding_card.dart'; // Import your custom widget
 
 class OnboardingPage extends StatefulWidget {
@@ -22,7 +20,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         image: "images/onb.png",
         title: 'Your journey to immunity starts here',
         description:
-        'Protect yourself and others around you by taking the vaccines today.',
+            'Protect yourself and others around you by taking the vaccines today.',
         buttonText: 'Get Started',
         onPressed: () {
           _pageController.animateToPage(
@@ -36,8 +34,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         image: "images/im.png",
         title: 'Easily schedule and manage your vaccines',
         description:
-        'Check with your device and schedule an appointment for vaccines.',
-        buttonText: 'Get Started',
+            'Check with your device and schedule an appointment for vaccines.',
+        buttonText: 'Next',
         onPressed: () {
           _pageController.animateToPage(
             2,
@@ -50,10 +48,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
         image: "images/ob11.png",
         title: 'Free access to request vaccine ID online',
         description:
-        'You can now request a vaccine ID easily from your device.',
-        buttonText: 'Get Started',
+            'You can now request a vaccine ID easily from your device.',
+        buttonText: 'Next',
         onPressed: () {
-          // Use context here safely
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => LogIn()),
@@ -76,6 +73,33 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 children: _onBoardingPages,
               ),
             ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => LogIn()),
+                );
+              },
+              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30), // Rounded corners
+                ),
+                side: const BorderSide(color: Colors.blue), // Border color
+                backgroundColor: Colors.white, // Background color
+                padding: const EdgeInsets.symmetric(
+                    vertical: 16), // Increased height to match ElevatedButton
+              ),
+              child: SizedBox(
+                width: 300, // Match width of ElevatedButton
+                child: const Text(
+                  'Skip',
+                  style: TextStyle(fontSize: 16, color: Colors.blue),
+                  textAlign: TextAlign.center, // Center the text
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
             SmoothPageIndicator(
               controller: _pageController,
               count: _onBoardingPages.length,
@@ -91,6 +115,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 );
               },
             ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
