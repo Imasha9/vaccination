@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:vaccination/pages/update_appointments.dart';
+import 'package:vaccination/pages/user_calendar.dart';
 import 'appbar.dart';
 import 'notification_page.dart';
 import 'package:intl/intl.dart';
@@ -33,6 +34,7 @@ class _MyAppointmentsState extends State<MyAppointments> {
           children: [
             SizedBox(height: 16),
             _buildButtonGroup(),
+            _buildGoToCalendarButton(),
             SizedBox(height: 16),
             _buildAppointmentsContainer(),
           ],
@@ -67,6 +69,38 @@ class _MyAppointmentsState extends State<MyAppointments> {
       }).toList(),
     );
   }
+
+  Widget _buildGoToCalendarButton() {
+    return Container(
+      margin: EdgeInsets.only(top: 16), // Adds a top margin of 16 pixels
+      child: ElevatedButton(
+        onPressed: () {
+          // Navigate to the calendar page when pressed
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserCalendarPage(), // Assuming you have a CalendarPage widget
+            ),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue[900], // Blue background color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30), // Rounded corners
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12), // Padding for the button
+        ),
+        child: Text(
+          'Go to Calendar',
+          style: TextStyle(
+            color: Colors.white, // White text color
+            fontSize: 16, // Font size
+          ),
+        ),
+      ),
+    );
+  }
+
 
   List<bool> _getSelectedState() {
     return [

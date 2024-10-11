@@ -87,4 +87,25 @@ class AppointmentDatabaseMethods {
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
+
+  Future<QuerySnapshot> getAppointmentsForUser(String userId) {
+    return _firestore
+        .collection('appointments') // Adjust this to your collection name
+        .where('userId', isEqualTo: userId) // Filter by user ID
+        .get();
+  }
+
+  Stream<QuerySnapshot> getEventsForDay(DateTime selectedDay) {
+    // Set the start of the day (midnight) and end of the day (23:59:59)
+    final startOfDay = DateTime(selectedDay.year, selectedDay.month, selectedDay.day, 0, 0, 0).toUtc();
+    final endOfDay = DateTime(selectedDay.year, selectedDay.month, selectedDay.day, 23, 59, 59).toUtc();
+
+
+    return FirebaseFirestore.instance
+        .collection('Appointments')
+        .where('startTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay)) // Events starting after or on the start of the day
+        .where('startTime', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay)) // Events starting before or on the end of the day
+        .snapshots();
+  }
+
 }
