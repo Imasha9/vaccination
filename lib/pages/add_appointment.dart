@@ -21,6 +21,10 @@ class RegisterAppointmentPage extends StatefulWidget {
 class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
   final _formKey = GlobalKey<FormState>();
 
+  // Declare variables for storing current user's info
+  late String _newname = '';
+  late String _newemail = '';
+
   String? _name, _email, _phoneNumber, _dateOfBirth, _sex, _message;
   DateTime? _selectedDate;
   final _nameController = TextEditingController();
@@ -38,6 +42,36 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
   void initState() {
     super.initState();
     _initializeNotifications();
+    fetchCurrentUser();
+  }
+
+  Future<void> fetchCurrentUser() async {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      try {
+        // Fetch user data from Firestore based on the current user's UID
+        DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userSnapshot.exists) {
+          var userData = userSnapshot.data() as Map<String, dynamic>;
+
+          setState(() {
+            _newname =
+                userData['name'] ?? "User"; // Fetching 'name' from Firestore
+            _newemail = userData['email'] ??
+                "example@example.com"; // Fetching 'email' from Firestore
+          });
+        } else {
+          print('User document does not exist in Firestore.');
+        }
+      } catch (e) {
+        print('Error fetching user data: $e');
+      }
+    }
   }
 
   // Initialize local notifications
@@ -71,7 +105,6 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
 
   // Function to save appointment to Firestore using DatabaseMethods
 
-
   Future<void> _registerAppointment() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -81,16 +114,21 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
       if (userId != null) {
         try {
           // Fetch event details based on eventId
-          var eventSnapshot = await FirebaseFirestore.instance.collection('Events').doc(widget.eventId).get();
+          var eventSnapshot = await FirebaseFirestore.instance
+              .collection('Events')
+              .doc(widget.eventId)
+              .get();
 
           // Extract event details
           var eventData = eventSnapshot.data();
 
           // Convert timestamp to DateTime for the event date
-          DateTime eventDate = (eventData!['date'] as Timestamp).toDate(); // The actual event date
+          DateTime eventDate = (eventData!['date'] as Timestamp)
+              .toDate(); // The actual event date
 
           // Get start and end times as strings
-          String startTimeString = eventData['startTime']; // Start time as a string
+          String startTimeString =
+              eventData['startTime']; // Start time as a string
           String endTimeString = eventData['endTime']; // End time as a string
 
           // Parse start time and end time from strings to DateTime
@@ -116,11 +154,20 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
             endTime.second,
           );
 
+          // Check if user has entered new values for name and email
+          // Use the new values if provided, otherwise fallback to the current placeholders (_name and _email)
+          String finalName = _nameController.text.isNotEmpty
+              ? _nameController.text
+              : _newname!;
+          String finalEmail = _emailController.text.isNotEmpty
+              ? _emailController.text
+              : _newemail!;
+
           // Save the appointment using DatabaseMethods
           await AppointmentDatabaseMethods().addAppointment(
             userId,
-            _name!,
-            _email!,
+            finalName, // Pass the final name (either input or placeholder)
+            finalEmail, // Pass the final email (either input or placeholder)
             _phoneNumber!,
             eventDate, // Use the event date as DateTime
             _selectedGender!,
@@ -174,10 +221,9 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
     }
 
     // Return the parsed DateTime
-    return DateTime.now().copyWith(hour: hour + (amPm == 'PM' ? 12 : 0), minute: minute);
+    return DateTime.now()
+        .copyWith(hour: hour + (amPm == 'PM' ? 12 : 0), minute: minute);
   }
-
-
 
   // Success Popup
   void _showSuccessPopup() {
@@ -257,10 +303,12 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
 
   // Email validator
   String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) return 'Email is required';
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
-    return null;
+    // Allow empty input for validation; checks will be made during saving
+    if (value != null && value.isNotEmpty) {
+      final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+      if (!emailRegex.hasMatch(value)) return 'Enter a valid email';
+    }
+    return null; // No errors
   }
 
   @override
@@ -326,6 +374,8 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                         TextFormField(
                           controller: _nameController,
                           decoration: InputDecoration(
+                            hintText: _newname,
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
                             labelText: 'Name',
                             labelStyle: const TextStyle(color: Colors.blue),
                             border: OutlineInputBorder(
@@ -339,10 +389,16 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                                 const Icon(Icons.person, color: Colors.blue),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Name is required';
+                            // Allow empty input for validation
+                            if (value != null && value.isNotEmpty) {
+                              if (value.trim().isEmpty) {
+                                return 'Name cannot be just whitespace';
+                              }
+                            } else {
+                              // If the value is empty, check if it's the initial value (which allows updates)
+                              return null; // No error for empty input if it matches initial value
                             }
-                            return null;
+                            return null; // No errors
                           },
                           onSaved: (value) => _name = value,
                         ),
@@ -352,6 +408,8 @@ class _RegisterAppointmentPageState extends State<RegisterAppointmentPage> {
                         TextFormField(
                           controller: _emailController,
                           decoration: InputDecoration(
+                            hintText: _newemail,
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
                             labelText: 'E-mail',
                             labelStyle: const TextStyle(color: Colors.blue),
                             border: OutlineInputBorder(
