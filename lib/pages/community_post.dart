@@ -23,11 +23,9 @@ class _CommunityPostState extends State<CommunityPost> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: CommonAppBar(
-        title: 'My Posts', // Set the title for this page
-      ),
+
       body: StreamBuilder<QuerySnapshot>(
-        stream: firestoreService.getPostsStream(),
+        stream: firestoreService.getUserPostsStream(), // Use the user-specific posts stream
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

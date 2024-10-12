@@ -109,13 +109,37 @@ class _CalendarPageState extends State<CalendarPage> {
                   TextFormField(
                     initialValue: startTime,
                     decoration: InputDecoration(labelText: 'Start Time (HH:MM)'),
-                    validator: (value) => value!.isEmpty ? 'Start time cannot be empty' : null,
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return 'Start time cannot be empty';
+                      }
+                      // Validate time format (HH:MM)
+                      final timeParts = value.split(':');
+                      if (timeParts.length != 2 ||
+                          int.tryParse(timeParts[0]) == null ||
+                          int.tryParse(timeParts[1]) == null) {
+                        return 'Please enter a valid time in HH:MM format';
+                      }
+                      return null;
+                    },
                     onSaved: (value) => startTime = value!,
                   ),
                   TextFormField(
                     initialValue: endTime,
                     decoration: InputDecoration(labelText: 'End Time (HH:MM)'),
-                    validator: (value) => value!.isEmpty ? 'End time cannot be empty' : null,
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return 'End time cannot be empty';
+                      }
+                      // Validate time format (HH:MM)
+                      final timeParts = value.split(':');
+                      if (timeParts.length != 2 ||
+                          int.tryParse(timeParts[0]) == null ||
+                          int.tryParse(timeParts[1]) == null) {
+                        return 'Please enter a valid time in HH:MM format';
+                      }
+                      return null;
+                    },
                     onSaved: (value) => endTime = value!,
                   ),
                   SizedBox(height: 20),
@@ -183,6 +207,7 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -209,6 +234,7 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.all(20.0),
+
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -219,6 +245,7 @@ class _CalendarPageState extends State<CalendarPage> {
             ],
           ),
           Row(
+
             children: [
               PopupMenuButton<CalendarFormat>(
                 onSelected: (format) {
@@ -347,45 +374,141 @@ class _CalendarPageState extends State<CalendarPage> {
           );
         }
         return ListView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           itemCount: snapshot.data!.docs.length,
           itemBuilder: (context, index) {
             final event = snapshot.data!.docs[index].data() as Map<String, dynamic>;
             final eventId = snapshot.data!.docs[index].id;
+
             return Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
               margin: EdgeInsets.only(bottom: 15),
-              child: Padding(
-                padding: const EdgeInsets.all(15),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          event['title'] ?? 'Untitled Event',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    // Left side with place
+                    Container(
+                      width: 100,
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(15),
+                          bottomLeft: Radius.circular(15),
                         ),
-                        Row(
+                      ),
+                      child: Center(
+                        child: Text(
+                          event['place'] ?? 'No location',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    // Vertical divider
+                    VerticalDivider(width: 1, color: Colors.grey),
+                    // Right side with event details
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            IconButton(
-                              icon: Icon(Icons.edit, color: Colors.blue),
-                              onPressed: () => _showAddEventDialog(existingEvent: {...event, 'id': eventId}),
+                            // Row for the title with icon
+                            Row(
+                              children: [
+                                Icon(Icons.event, size: 20, color: Colors.blue), // Icon for title
+                                SizedBox(width: 5),
+                                Expanded(
+                                  child: Text(
+                                    event['title'] ?? 'Untitled Event',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _showDeleteConfirmationDialog(eventId),
+                            SizedBox(height: 10),
+                            // Row for time with icons
+                            Row(
+                              children: [
+                                Icon(Icons.access_time, size: 20, color: Colors.green),
+                                SizedBox(width: 5),
+                                Text(
+                                  '${event['startTime'] ?? 'N/A'}',
+                                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                                ),
+                                SizedBox(width: 5),
+                                Icon(Icons.arrow_forward, size: 20, color: Colors.grey),
+                                SizedBox(width: 5),
+                                Text(
+                                  '${event['endTime'] ?? 'N/A'}',
+                                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            // Row for place with icon
+                            Row(
+                              children: [
+                                Icon(Icons.location_on, size: 20, color: Colors.red), // Icon for place
+                                SizedBox(width: 5),
+                                Expanded(
+                                  child: Text(
+                                    event['place'] ?? 'No location provided',
+                                    style: TextStyle(fontSize: 16, color: Colors.black87),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            // Row for description with icon
+                            Row(
+                              children: [
+                                Icon(Icons.description, size: 20, color: Colors.orange), // Icon for description
+                                SizedBox(width: 5),
+                                Expanded(
+                                  child: Text(
+                                    event['description'] ?? 'No description',
+                                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
+                      ),
+                    )
+,
+                    // Edit and Delete buttons
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => _showAddEventDialog(existingEvent: {...event, 'id': eventId}),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _showDeleteConfirmationDialog(eventId),
+                        ),
                       ],
                     ),
-                    SizedBox(height: 10),
-                    _buildEventProperty(Icons.access_time, '${event['startTime'] ?? 'N/A'} - ${event['endTime'] ?? 'N/A'}'),
-                    _buildEventProperty(Icons.location_on, event['place'] ?? 'No location'),
-                    _buildEventProperty(Icons.description, event['description'] ?? 'No description'),
                   ],
                 ),
               ),
@@ -396,21 +519,25 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildEventProperty(IconData icon, String value) {
+  Widget _buildEventProperty(IconData icon, String value, Color iconColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey),
+          Icon(icon, size: 20, color: iconColor),
           SizedBox(width: 10),
-          Text(
-            value,
-            style: TextStyle(fontSize: 16, color: Colors.black),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 16, color: Colors.black87),
+              overflow: TextOverflow.ellipsis, // Ensure long text is truncated properly
+            ),
           ),
         ],
       ),
     );
   }
+
 
   void _showDeleteConfirmationDialog(String eventId) {
     showDialog(

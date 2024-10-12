@@ -19,6 +19,49 @@ class _SignUpState extends State<SignUp> {
   final TextEditingController _nicController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  // Name validation: Only letters and spaces, no special characters
+  String? _validateName(String value) {
+    if (value.isEmpty) {
+      return 'Please enter your name';
+    } else if (!RegExp(r"^[a-zA-Z\s]+$").hasMatch(value)) {
+      return 'Name can only contain letters and spaces';
+    }
+    return null;
+  }
+
+  // Email validation: Must be from specific domains
+  String? _validateEmail(String value) {
+    if (value.isEmpty) {
+      return 'Please enter your email';
+    } else if (!RegExp(r"^[a-zA-Z0-9._%+-]+@(gmail\.com|yahoo\.com|mail\.com)$")
+        .hasMatch(value)) {
+      return 'Email must be from @gmail.com, @yahoo.com, or @mail.com';
+    }
+    return null;
+  }
+
+  // NIC validation: 12 characters, letters, and numbers
+  String? _validateNIC(String value) {
+    if (value.isEmpty) {
+      return 'Please enter your NIC';
+    } else if (value.length != 12) {
+      return 'NIC must be exactly 12 characters';
+    } else if (!RegExp(r"^[a-zA-Z0-9]+$").hasMatch(value)) {
+      return 'NIC must contain only letters and numbers';
+    }
+    return null;
+  }
+
+  // Password validation: At least one special character
+  String? _validatePassword(String value) {
+    if (value.isEmpty) {
+      return 'Please enter your password';
+    } else if (!RegExp(r'^(?=.*?[#?!@$%^&*-]).{6,}$').hasMatch(value)) {
+      return 'Password must contain at least one special character';
+    }
+    return null;
+  }
+
   Future<void> _register() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
@@ -93,25 +136,25 @@ class _SignUpState extends State<SignUp> {
                     _buildTextField(
                       controller: _nameController,
                       hintText: 'Name',
-                      validatorText: 'Please enter your name',
+                      validator: _validateName,
                     ),
                     const SizedBox(height: 10.0),
                     _buildTextField(
                       controller: _emailController,
                       hintText: 'Email',
-                      validatorText: 'Please enter your email',
+                      validator: _validateEmail,
                     ),
                     const SizedBox(height: 10.0),
                     _buildTextField(
                       controller: _nicController,
                       hintText: 'NIC',
-                      validatorText: 'Please enter your NIC',
+                      validator: _validateNIC,
                     ),
                     const SizedBox(height: 10.0),
                     _buildTextField(
                       controller: _passwordController,
                       hintText: 'Password',
-                      validatorText: 'Please enter your password',
+                      validator: _validatePassword,
                       obscureText: true,
                     ),
                     const SizedBox(height: 10.0),
@@ -144,7 +187,7 @@ class _SignUpState extends State<SignUp> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
-    required String validatorText,
+    required String? Function(String) validator,
     bool obscureText = false,
   }) {
     return Container(
@@ -156,12 +199,7 @@ class _SignUpState extends State<SignUp> {
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return validatorText;
-          }
-          return null;
-        },
+        validator: (value) => validator(value ?? ''),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hintText,
@@ -176,9 +214,9 @@ class _SignUpState extends State<SignUp> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
       decoration: BoxDecoration(
-          color: const Color(0xFF17C2EC),
-          borderRadius: BorderRadius.circular(20),
-          ), // Add border here
+        color: const Color(0xFF17C2EC),
+        borderRadius: BorderRadius.circular(20),
+      ), // Add border here
       child: Center(
         child: Text(
           text,

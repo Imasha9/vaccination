@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+
 import 'VaccinationIssueScreen.dart';
 
 class VaccinationForm extends StatefulWidget {
@@ -16,6 +18,7 @@ class _VaccinationFormState extends State<VaccinationForm> {
   final TextEditingController _issueDescriptionController = TextEditingController();
 
   String uid = '';
+  bool showApproved = false;
 
   @override
   void initState() {
@@ -35,7 +38,6 @@ class _VaccinationFormState extends State<VaccinationForm> {
 
   void _loadNIC(String uid) async {
     DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-
     if (userDoc.exists) {
       setState(() {
         _nicController.text = userDoc['nic'] ?? 'NIC Not Found';
@@ -65,45 +67,6 @@ class _VaccinationFormState extends State<VaccinationForm> {
 
     _showSuccessMessage('Vaccination details added successfully');
   }
-
-  void _updateForm(String docId) async {
-    String vaccineSerialNumber = _vaccineNumberController.text.trim();
-    String center = _centerController.text.trim();
-    String name = _nameController.text.trim();
-
-    await FirebaseFirestore.instance.collection('VaccinationDetails').doc(docId).update({
-      'vaccineSerialNumber': vaccineSerialNumber,
-      'center': center,
-      'name': name,
-    });
-
-    _vaccineNumberController.clear();
-    _centerController.clear();
-    _nameController.clear();
-
-    _showSuccessMessage('Vaccination details updated successfully');
-  }
-
-  void _showSuccessMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Text(message),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
-  }
-
   void _showFormBottomSheet({DocumentSnapshot? document}) {
     final bool isUpdate = document != null;
 
@@ -149,29 +112,23 @@ class _VaccinationFormState extends State<VaccinationForm> {
                   SizedBox(height: 16),
                   _buildTextField(_nameController, 'Name', Icons.person),
                   SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (isUpdate) {
-                              _updateForm(document!.id);
-                            } else {
-                              _submitForm();
-                            }
-                            Navigator.of(context).pop();
-                          },
-                          child: Text(isUpdate ? 'Update' : 'Submit'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            padding: EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (isUpdate) {
+                        _updateForm(document!.id);
+                      } else {
+                        _submitForm();
+                      }
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(isUpdate ? 'Update' : 'Submit'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white, backgroundColor: Colors.blue,
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -182,29 +139,112 @@ class _VaccinationFormState extends State<VaccinationForm> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
+  void _updateForm(String docId) async {
+    String vaccineSerialNumber = _vaccineNumberController.text.trim();
+    String center = _centerController.text.trim();
+    String name = _nameController.text.trim();
+
+    await FirebaseFirestore.instance.collection('VaccinationDetails').doc(docId).update({
+      'vaccineSerialNumber': vaccineSerialNumber,
+      'center': center,
+      'name': name,
+    });
+
+    _vaccineNumberController.clear();
+    _centerController.clear();
+    _nameController.clear();
+
+    _showSuccessMessage('Vaccination details updated successfully');
+  }
+
+  void _showSuccessMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
-        filled: true,
-        fillColor: Colors.grey[200],
       ),
     );
   }
 
-  void _showDetailDialog(DocumentSnapshot document) {
+  void _showEditFormBottomSheet(DocumentSnapshot document) {
+    final data = document.data() as Map<String, dynamic>;
+    _vaccineNumberController.text = data['vaccineSerialNumber'] ?? '';
+    _centerController.text = data['center'] ?? '';
+    _nameController.text = data['name'] ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return SingleChildScrollView(
+          child: Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Update Vaccination Details',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 20),
+                  _buildTextField(_vaccineNumberController, 'Vaccine Serial Number', Icons.vaccines),
+                  SizedBox(height: 16),
+                  _buildTextField(_centerController, 'Center', Icons.location_on),
+                  SizedBox(height: 16),
+                  _buildTextField(_nameController, 'Name', Icons.person),
+                  SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      _updateForm(document.id);
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('Update'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white, backgroundColor: Colors.blue,
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showReportIssueDialog(DocumentSnapshot document) {
     final data = document.data() as Map<String, dynamic>;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Vaccination Details'),
+          title: Text('Report Issue'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -213,8 +253,6 @@ class _VaccinationFormState extends State<VaccinationForm> {
                 _buildDetailItem('Name', data['name'] ?? 'Unknown'),
                 _buildDetailItem('Center', data['center'] ?? 'Unknown'),
                 _buildDetailItem('Vaccine Serial Number', data['vaccineSerialNumber'] ?? 'Unknown'),
-                _buildDetailItem('Status', data['status'] ?? 'Unknown'),
-                _buildDetailItem('NIC', data['nic'] ?? 'Unknown'),
                 SizedBox(height: 16),
                 TextField(
                   controller: _issueDescriptionController,
@@ -246,9 +284,6 @@ class _VaccinationFormState extends State<VaccinationForm> {
                   _issueDescriptionController.clear();
                   Navigator.of(context).pop();
                   _showSuccessMessage('Issue reported successfully');
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => VaccinationIssuesScreen(uid: uid),
-                  ));
                 }
               },
               child: Text('Submit Issue'),
@@ -259,14 +294,111 @@ class _VaccinationFormState extends State<VaccinationForm> {
     );
   }
 
-  Widget _buildDetailItem(String label, String value) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        filled: true,
+        fillColor: Colors.grey[200],
+      ),
+    );
+  }
+
+  Widget _buildVaccinationCard(DocumentSnapshot document) {
+    final data = document.data() as Map<String, dynamic>;
+    final bool isApproved = data['status'] == 'Approved';
+
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      elevation: 4,
+      margin: EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date column
+            Column(
+              children: [
+                Text(
+                  DateFormat('MMM').format((data['date'] as Timestamp).toDate()),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
+                Text(
+                  DateFormat('dd').format((data['date'] as Timestamp).toDate()),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  DateFormat('yyyy').format((data['date'] as Timestamp).toDate()),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(width: 16),
+            // Details column
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data['name'] ?? 'Unknown',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
+                  ),
+                  SizedBox(height: 8),
+                  _buildDetailItem('Center', data['center'] ?? 'Unknown', Icons.location_on),
+                  _buildDetailItem('Vaccine Serial Number', data['vaccineSerialNumber'] ?? 'Unknown', Icons.vaccines),
+                  _buildDetailItem('NIC', data['nic'] ?? 'Unknown', Icons.perm_identity),
+                  _buildDetailItem('Status', data['status'], isApproved ? Icons.check_circle : Icons.pending),
+                  SizedBox(height: 6),
+                  if (!isApproved)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => _showEditFormBottomSheet(document),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.report_problem, color: Colors.red),
+                          onPressed: () => _showReportIssueDialog(document),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailItem(String label, String value, [IconData? icon]) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (icon != null) Icon(icon, size: 18),
+          if (icon != null) SizedBox(width: 8),
           Text('$label: ', style: TextStyle(fontWeight: FontWeight.bold)),
-          Expanded(child: Text(value)),
+          Text(value),
         ],
       ),
     );
@@ -276,7 +408,7 @@ class _VaccinationFormState extends State<VaccinationForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Vaccination Details'),
+        title: Text('My Vaccines'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
@@ -292,86 +424,79 @@ class _VaccinationFormState extends State<VaccinationForm> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('VaccinationDetails')
-                    .where('uid', isEqualTo: uid)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-
-                  final docs = snapshot.data!.docs;
-                  if (docs.isEmpty) {
-                    return Center(
-                      child: Text(
-                        "No Vaccination Details Found",
-                        style: TextStyle(fontSize: 18, color: Colors.grey),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    itemCount: docs.length,
-                    itemBuilder: (context, index) {
-                      final document = docs[index];
-                      final data = document.data() as Map<String, dynamic>;
-
-                      return Card(
-                        elevation: 4,
-                        margin: EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.all(16),
-                          title: Text(
-                            data['name'] ?? 'Unknown',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(height: 8),
-                              Text('Vaccine: ${data['vaccineSerialNumber'] ?? 'Unknown'}'),
-                              Text('Center: ${data['center'] ?? 'Unknown'}'),
-                              Text('Status: ${data['status'] ?? 'Unknown'}'),
-                            ],
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit, color: Colors.blue),
-                                onPressed: () => _showFormBottomSheet(document: document),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.info_outline, color: Colors.green),
-                                onPressed: () => _showDetailDialog(document),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+      body: Column(
+        children: [
+          // Toggle Button Row (Pending, Approved)
+          Container(
+            padding: EdgeInsets.all(10),
+            color: Colors.blue.shade600,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildToggleButton('Pending', showApproved == false),
+                _buildToggleButton('Approved', showApproved == true),
+              ],
             ),
-          ],
-        ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('VaccinationDetails')
+                  .where('uid', isEqualTo: uid)
+                  .where('status', isEqualTo: showApproved ? 'Approved' : 'Pending')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final docs = snapshot.data!.docs.toList();
+                  return ListView.builder(
+                    padding: EdgeInsets.all(16),
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) => _buildVaccinationCard(docs[index]),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error loading data'));
+                } else {
+                  return Center(child: CircularProgressIndicator());
+                }
+              },
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showFormBottomSheet(),
-        child: Icon(Icons.add),
+        icon: Icon(Icons.add),
+        label: Text('Add Vaccination'),
         backgroundColor: Colors.blue,
       ),
     );
   }
+
+
+  Widget _buildToggleButton(String label, bool isActive) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          showApproved = label == 'Approved';
+        });
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : Colors.blue.shade600,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.blue : Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+
+
+    );
+  }
+
 }

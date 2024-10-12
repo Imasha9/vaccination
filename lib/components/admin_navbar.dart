@@ -4,6 +4,7 @@ import 'package:vaccination/pages/community_post.dart';
 import 'package:vaccination/pages/home_page.dart';
 import '../pages/VaccinationDetails.dart';
 import '../pages/admin_home.dart';
+import '../pages/approve_appointments.dart';
 import '../pages/calendar.dart';
 
 
@@ -19,6 +20,8 @@ class _AdminNavBarState extends State<AdminNavBar> {
     AdminHomePage(),
 
     CalendarPage(),
+
+    ApproveAppointments(),
   ];
 
   int _currentIndex = 0;
@@ -63,10 +66,19 @@ class _AdminNavBarState extends State<AdminNavBar> {
             SalomonBottomBarItem(
               selectedColor: Colors.white,
               unselectedColor: Colors.black45,
-              icon: _currentIndex == 3
+              icon: _currentIndex == 2
                   ? const Icon(Icons.person_rounded,size: 30.0,)
                   : const Icon(Icons.person_outline,size: 25.0,), // Rounded profile icon
               title: const Text("Profile"),
+            ),
+
+            SalomonBottomBarItem(
+              selectedColor: Colors.white,
+              unselectedColor: Colors.black45,
+              icon: _currentIndex == 4
+                  ? const Icon(Icons.person_rounded,size: 30.0,)
+                  : const Icon(Icons.person_outline,size: 25.0,), // Rounded profile icon
+              title: const Text("Appointments"),
             ),
           ],
         ),
