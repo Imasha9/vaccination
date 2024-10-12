@@ -55,7 +55,15 @@ dependencies:
   smooth_page_indicator: ^1.2.0+3
   material_symbols_icons: ^4.2785.1
   flutter_local_notifications: ^17.2.3
+  font_awesome_flutter: ^10.4.0
+  shimmer: ^2.0.0
   badges: ^3.1.2
+  google_maps_flutter: ^2.5.0
+  location: ^5.0.0
+  flutter_polyline_points: ^2.1.0
+  google_fonts: ^4.0.0
+
+
 
 
 
@@ -105,6 +113,8 @@ flutter:
    - images/homebg.png
    - images/log.png
    - images/20944881.jpg
+   - images/lsk.png
+   - images/splshr.png
 
 
 

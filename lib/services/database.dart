@@ -83,12 +83,13 @@ class DatabaseMethods {
   }
 
   // Method to add a vaccination issue
-  Future<void> addVaccinationIssue(String uid, String vaccineName, String issueDescription) async {
+  Future<void> addVaccinationIssue(String uid, String vaccineName, String issueDescription, String response) async {
     // Fetch vaccine details
     final vaccineDetailsSnapshot = await FirebaseFirestore.instance
         .collection('VaccinationDetails')
         .where('uid', isEqualTo: uid)
         .where('vaccineName', isEqualTo: vaccineName)
+        .where('response', isEqualTo: response)
         .orderBy('date', descending: true)
         .limit(1)
         .get();
@@ -106,6 +107,7 @@ class DatabaseMethods {
       'issueDescription': issueDescription,
       'vaccineDetails': vaccineData,
       'timestamp': Timestamp.now(),
+      'response':response,
     });
   }
 
@@ -131,6 +133,63 @@ class DatabaseMethods {
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
+
+  // Method to get all vaccination issues (without filtering by user)
+  Stream<QuerySnapshot<Map<String, dynamic>>> getAllVaccinationIssuesStream() {
+    return _firestore.collection('VaccinationIssues').snapshots();
+  }
+
+  Future<void> updateVaccinationIssueResponse(
+      String issueId, String newResponse, String responseType) async {
+    try {
+      await _firestore.collection('VaccinationIssues').doc(issueId).update({
+        'response': newResponse,
+        'responseType': responseType, // Add a response type to categorize the response
+      });
+    } catch (e) {
+      print("Error updating response: $e");
+    }
+  }
+  Future<void> updateVaccinationIssue(
+      String issueId, String issueDescription) async {
+    try {
+      await _firestore.collection('VaccinationIssues').doc(issueId).update({
+        'issueDescription': issueDescription,
+        // Add a response type to categorize the response
+      });
+    } catch (e) {
+      print("Error updating response: $e");
+    }
+  }
+
+  Future<void> deleteIssues(String issueId) {
+    return _firestore.collection("VaccinationIssues").doc(issueId).delete();
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getAllVaccinationDetails() {
+    return _firestore.collection('VaccinationDetails').snapshots();
+  }
+
+  Future<void> updateVaccineDetails(String vaccineId, String status) async {
+    try {
+      if (vaccineId.isNotEmpty) {
+        await FirebaseFirestore.instance
+            .collection('VaccinationDetails')
+            .doc(vaccineId)
+            .update({'status': status});
+        print("Vaccination status updated for $vaccineId");
+      } else {
+        print("Error: Vaccine ID is empty.");
+      }
+    } catch (e) {
+      print("Error updating vaccine details: $e");
+    }
+  }
+
+
+
+
+
 
 
 }

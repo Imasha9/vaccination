@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:vaccination/firebase_options.dart';
 import 'package:vaccination/pages/home_page.dart';
 import 'package:vaccination/pages/onboarding_page.dart';
+import 'package:vaccination/pages/splash_screen.dart';
 import 'package:vaccination/services/storage_service.dart';
 import 'package:vaccination/pages/my_appointments_page.dart';
 import 'package:vaccination/components/bottom_nav_bar.dart';
@@ -45,7 +46,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      home: const OnboardingPage(), // Use BottomNavBar as the home widget
+      home:  SplashScreen(), // Use BottomNavBar as the home widget
     );
   }
 }

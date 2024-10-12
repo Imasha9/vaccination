@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'VaccinationDetails.dart';
+import 'VaccinationIssueScreen.dart';
 import 'appbar.dart';
 import 'news.dart';
 import 'my_appointments_page.dart';
@@ -17,11 +20,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Future<List<Article>>? _latestNews;
-
+  String? uid;
   @override
   void initState() {
     super.initState();
     _latestNews = fetchLatestNews();
+    _loadUID();
   }
 
   Future<List<Article>> fetchLatestNews() async {
@@ -50,6 +54,15 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       throw Exception('Failed to load news: $e');
+    }
+  }
+  void _loadUID() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        uid = user.uid;
+      });
+      // You can load additional user data here if needed
     }
   }
 
@@ -249,11 +262,30 @@ class _HomePageState extends State<HomePage> {
             }),
         _buildQuickAccessButton("Issue Responses", Icons.announcement_rounded,
             Colors.yellow[100]!, Colors.yellow[700]!, () {
-              // Add your issue responses page navigation here
+              if (uid != null) {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => VaccinationIssuesScreen(uid: uid!),
+                ));
+              } else {
+                // Handle case where UID is null, such as showing a message
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("User not logged in!"),
+                ));
+              }
             }),
         _buildQuickAccessButton("My Vaccine Records", Icons.vaccines,
             Colors.teal[100]!, Colors.teal, () {
-              // Add your vaccine records page navigation here
+              if (uid != null) {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => VaccinationForm(),
+                ));
+              } else {
+                // Handle case where UID is null, such as showing a message
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text("User not logged in!"),
+                ));
+              }
+
             }),
         _buildQuickAccessButton("Notifications", Icons.notifications_active,
             Colors.blue[100]!, Colors.blue, () {
@@ -261,7 +293,7 @@ class _HomePageState extends State<HomePage> {
             }),
         _buildQuickAccessButton("Community Posts", Icons.forum_rounded,
             Colors.purple[200]!, Colors.purple[400]!, () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => PostsPage()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => PostsTabScreen()));
             }),
       ],
     );

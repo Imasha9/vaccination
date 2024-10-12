@@ -144,19 +144,68 @@ class _ShowAppointmentsPageState extends State<ShowAppointmentsPage> {
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.all(20.0),
-      child: Center(
-        // Center the text
-        child: Text(
-          'Book Your Appointments Here',
-          style: TextStyle(
-            fontSize: 20,
-            color: Colors.white, // Set text color to white
-            fontWeight: FontWeight.bold, // Make text bold
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align text and buttons to the start (left)
+        children: [
+          // The header text at the top
+          Text(
+            'Book Your Appointments Here',
+            style: TextStyle(
+              fontSize: 20,
+              color: Colors.white, // Set text color to white
+              fontWeight: FontWeight.bold, // Make text bold
+            ),
           ),
-        ),
+          SizedBox(height: 10), // Add some space between the text and the row below
+
+          // The row containing PopupMenuButton and IconButton below the text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween, // Aligns dropdown and notification button
+            children: [
+              PopupMenuButton<CalendarFormat>(
+                onSelected: (format) {
+                  setState(() {
+                    _calendarFormat = format;
+                  });
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: CalendarFormat.month,
+                    child: Text('Month View'),
+                  ),
+                  PopupMenuItem(
+                    value: CalendarFormat.twoWeeks,
+                    child: Text('2 Weeks View'),
+                  ),
+                  PopupMenuItem(
+                    value: CalendarFormat.week,
+                    child: Text('Week View'),
+                  ),
+                ],
+                child: Row(
+                  children: [
+                    Text(
+                      _calendarFormat == CalendarFormat.month
+                          ? 'Month'
+                          : _calendarFormat == CalendarFormat.twoWeeks
+                          ? '2 Weeks'
+                          : 'Week',
+                      style: TextStyle(fontSize: 18, color: Colors.pink),
+                    ),
+                    Icon(Icons.arrow_drop_down, color: Colors.pink),
+                  ],
+                ),
+              ),
+              SizedBox(width: 16),
+
+            ],
+          ),
+        ],
       ),
     );
   }
+
+
 
   Widget _buildCalendar() {
     return Container(
